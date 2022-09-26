@@ -52,7 +52,13 @@ MESSAGE_HIDE_PATTERNS = ""
 NAME_BAN_PATTERNS = ""
 extractor = URLExtract()
 
-
+TELEGRAM_BOT_TOKEN = ''
+CHAT_IDS = ''
+BOT_ALIAS = ''
+NOTIFY_CHAT = ''
+TELEGRAM_BOT_POSTGRES_URL = ''
+TWITTER_URL = ''
+TWITTER_CHAT_ID = ''
 
 DEBUG = "true"
 ADMIN_EXEMPT = "true"
@@ -299,7 +305,8 @@ def ban_not_verified(bot):
                     bot.deleteMessage(message_id = usuario.captcha_message, chat_id = CHAT_IDS)
                 except Exception as e:
                     print("[002] Error normal, no pasa na")
-                bot.kick_chat_member(chat_id=CHAT_IDS, user_id=usuario.id) 
+                # removed banning from captcha
+                # bot.kick_chat_member(chat_id=CHAT_IDS, user_id=usuario.id) 
                 s = session()
                 userBan = UserBan(
                     user_id=usuario.id,
@@ -438,15 +445,21 @@ def delete_message_by_type(bot, type, chat_id):
 class TelegramMonitorBot:
 
     def __init__(self):
-	TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-	CHAT_IDS = os.getenv("CHAT_IDS")
-	BOT_ALIAS = os.getenv("BOT_ALIAS")
-	NOTIFY_CHAT = os.getenv("NOTIFY_CHAT")
+        load_dotenv('.env')  # load main .env file
+        environment = os.getenv("ENVIRONMENT")
+        print("Environment: " + environment)
 
-	TELEGRAM_BOT_POSTGRES_URL = os.getenv("TELEGRAM_BOT_POSTGRES_URL")
+        sub_env = '.env.' + environment
+        load_dotenv(sub_env)  # load main .env file
+        TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+        CHAT_IDS = os.getenv("CHAT_IDS")
+        BOT_ALIAS = os.getenv("BOT_ALIAS")
+        NOTIFY_CHAT = os.getenv("NOTIFY_CHAT")
 
-	TWITTER_URL = os.getenv("TWITTER_URL")
-	TWITTER_CHAT_ID = os.getenv("TWITTER_CHAT_ID")
+        TELEGRAM_BOT_POSTGRES_URL = os.getenv("TELEGRAM_BOT_POSTGRES_URL")
+
+        TWITTER_URL = os.getenv("TWITTER_URL")
+        TWITTER_CHAT_ID = os.getenv("TWITTER_CHAT_ID")
 	
         print("init")
         self.debug = (
@@ -593,7 +606,7 @@ class TelegramMonitorBot:
                     [InlineKeyboardButton(text='Check out our Linktree', url='https://linktr.ee/dfxfinance')]
             ])
             tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup)
-            messageCaptcha = "Before you can post to the group you must complete a CAPTCHA. If you take more than 5 minutes you will be banned."
+            messageCaptcha = "Before you can post to the group you must complete a CAPTCHA. If you take more than 10 minutes you will be banned."
             reply_markup_captcha = InlineKeyboardMarkup([
                     [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
             ])
@@ -1472,15 +1485,15 @@ class TelegramMonitorBot:
         sub_env = '.env.' + environment
         load_dotenv(sub_env)  # load main .env file
 	
-	TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-	CHAT_IDS = os.getenv("CHAT_IDS")
-	BOT_ALIAS = os.getenv("BOT_ALIAS")
-	NOTIFY_CHAT = os.getenv("NOTIFY_CHAT")
+        TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+        CHAT_IDS = os.getenv("CHAT_IDS")
+        BOT_ALIAS = os.getenv("BOT_ALIAS")
+        NOTIFY_CHAT = os.getenv("NOTIFY_CHAT")
 
-	TELEGRAM_BOT_POSTGRES_URL = os.getenv("TELEGRAM_BOT_POSTGRES_URL")
+        TELEGRAM_BOT_POSTGRES_URL = os.getenv("TELEGRAM_BOT_POSTGRES_URL")
 
-	TWITTER_URL = os.getenv("TWITTER_URL")
-	TWITTER_CHAT_ID = os.getenv("TWITTER_CHAT_ID")
+        TWITTER_URL = os.getenv("TWITTER_URL")
+        TWITTER_CHAT_ID = os.getenv("TWITTER_CHAT_ID")
 
         """ Start the bot. """
         global bot
