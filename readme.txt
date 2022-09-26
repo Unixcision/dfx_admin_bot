@@ -1,1 +1,1 @@
-❌ Message deleted. <a href="tg://user?id=1882290466">crypto</a> you are not authorized to post audios, documents, links, games or voice messages. Level up to remove these restrictions.
+❌ Message deleted. <a href="tg://user?id=744570557">TipsterTrust.com</a> you are not authorized to post audios, documents, links, games or voice messages. Level up to remove these restrictions.

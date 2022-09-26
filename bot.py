@@ -690,10 +690,7 @@ class TelegramMonitorBot:
                     user_id=update.message.from_user.id,
                     message=update.message.text)
                 s.add(messageHide)
-                s.commit()            
-                # Notify channel
-                if self.notify_chat:
-                    bot.send_message(chat_id=self.notify_chat, text=log_message)
+                s.commit()                          
             s.close()
 
     def banCaptcha(self, bot, message, usuario, from_user):
