@@ -339,7 +339,7 @@ def daily_description(bot):
         while hour_to_send >= 24:
             hour_to_send = hour_to_send - 24
         if now.hour == hour_to_send and now.minute == 0:
-            text_to_send = "👋🏻 Hello everyone!\nI am DFX Bot and I am here to serve you. Let me explain what I can do for you.\n\n🤖 You can use these commands in this chat and they will do the described:\n/dragon → Post a random dragon image\n/kevin → Post a Kevin's image\n/adrian → Post an Adrian's image\n/gm → Post a Good Morning image\n/coty → Post a Coty's image\n/jim → Post a Jim's image\n/hopium → Post an hopium image\n/price → Displays the price\n/whalechart → Post the whale chart\n/maticrpc → Post the matic rpc configuration\n/vote → Post the vote tutorial\n/supply → Displays the current supply\n/top10level → Displays the top 10 users by their level\n/mylevel → Shows your level to the world\n\n🦸‍♂️ I am also a <b>moderator</b>, I do not allow you to send links or media files until I <b>prove that you are trustworthy</b>, that is, until you reach level 1 through your contributions to the group.\n\nAnd how do I level up? It's easy, just receive \"+1\" in reply to your messages and <b>write content that adds value</b> to the conversation.\n\n✍️ Reply with +1 to the messages that <b>you consider valuable</b> to contribute to this system.\n\n🔔 <b>Start a converation with me privately</b> if you want to get updated when someone adds reputation to you.\n\n❤️ Have a lovely day and thank you for supporting DFX! ❤️"
+            text_to_send = "👋🏻 Hello everyone!\nI am DFX Bot and I am here to serve you. Let me explain what I can do for you.\n\n🤖 You can use these commands in this chat and they will do the described:\n/dragon → Post a random dragon image\n/kevin → Post a Kevin's image\n/adrian → Post an Adrian's image\n/gm → Post a Good Morning image\n/coty → Post a Coty's image\n/jim → Post a Jim's image\n/hopium → Post an hopium image\n/price → Displays the price\n/whalechart → Post the whale chart\n/maticrpc → Post the matic rpc configuration\n/vote → Post the vote tutorial\n/supply → Displays the current supply\n/top10level → Displays the top 10 users by their level\n/mylevel → Shows your level to the world\n\n🦸‍♂️ I am also a <b>moderator</b>, I do not allow you to send links or media files until you reach level 1 through your contributions to the group.\n\nAnd how do I level up? It's easy, just receive \"+1\" in reply to your messages and <b>write content that adds value</b> to the conversation.\n\n✍️ Reply with +1 to the messages that <b>you consider valuable</b> to contribute to this system.\n\n🔔 <b>Start a converation with me privately</b> if you want to get updated when someone adds reputation to you.\n\n❤️ Have a lovely day and thank you for supporting DFX! ❤️"
             delete_message_by_type(bot, "daily-explain", CHAT_IDS)
             tlg_send_message(bot, CHAT_IDS, text_to_send, "daily-explain")
         
@@ -615,7 +615,7 @@ class TelegramMonitorBot:
                     [InlineKeyboardButton(text='Check out our Linktree', url='https://linktr.ee/dfxfinance')]
             ])
             tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup)
-            messageCaptcha = "Before you can post to the group you must complete a CAPTCHA. If you take more than 10 minutes you will be banned."
+            messageCaptcha = "Before you can post to the group you must complete a CAPTCHA, do this and all your questions will be answered."
             reply_markup_captcha = InlineKeyboardMarkup([
                     [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
             ])
@@ -679,7 +679,7 @@ class TelegramMonitorBot:
                 update.message.voice) and usuario.popularity == 0:
                 # Logging
                 mention_html = update.message.from_user.mention_html()
-                log_message = "❌ Message deleted. " + mention_html + " you are not authorized to post audios, documents, links, games or voice messages. Level up to remove these restrictions."
+                log_message = "❌ Message deleted. " + mention_html + " you are not authorized to post audios, documents, links, games or voice messages. You need to level up by joining in the conversation more."
                 delete_message_by_type(bot, "not-authorized", CHAT_IDS)
                 tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized")
                 print(log_message)
@@ -817,7 +817,7 @@ class TelegramMonitorBot:
                                     can_pin_messages=True,
                                 )
                                 context.bot.restrict_chat_member(CHAT_IDS, from_user, permissions) 
-                                tlg_send_message(bot, message.chat_id, "✅ CAPTCHA solved successfully, welcome to the DFXFinance community!", type=None)
+                                tlg_send_message(bot, message.chat_id, "✅ CAPTCHA solved, welcome to the DFX Finance community! Take a look at the pinned posts or visit docs.dfx.finance for more info.", type=None)
                                 print("USER", usuario.first_name, usuario.username, "PASSED THE CAPTCHA")
                                 try:
                                     bot.deleteMessage(message_id = usuario.captcha_message, chat_id = CHAT_IDS)
@@ -835,7 +835,7 @@ class TelegramMonitorBot:
                                     )
                                 s.add(captchaModel)
                                 s.commit()                               
-                                img_caption = "Please write a message with the text in the image to verify that you are a human. If you don't solve this captcha in 10 minutes, you will be restricted on the group.\n\n📝 NOTE: If you find it hard you can write the command /new and receive a new one."
+                                img_caption = "Please write the 4 numbers you see in the image to verify that you are a human.\n\n📝 NOTE: If you find it hard you can write the command /new and receive a new one."
                                 tlg_send_image(bot, message.chat_id, open(captcha["image"],"rb"), None, img_caption)
                             elif message.text == "/new" and captchaModel is not None:
                                 captcha = create_image_captcha(message.chat_id, usuario.id, 1)       
@@ -844,26 +844,26 @@ class TelegramMonitorBot:
                                 captchaModel.solution=captcha_code
                                 s.merge(captchaModel)
                                 s.commit()
-                                print("USER", usuario.username, "FAILED ONE CAPTCHA ATTEMP")
+                                print("USER", usuario.username, "FAILED ONE CAPTCHA ATTEMPT")
                                 intentos = captchaModel.attemps
                                 if intentos == 0:
                                     self.banCaptcha(bot, message, usuario, from_user)
                                     return
-                                tlg_send_message(bot, message.chat_id, "Regenerating CAPTCHA, you have missed an opportunity, you have " + str(intentos) + " of 50 attemps left", type=None)
-                                img_caption = "Please write a message with the text in the image to verify that you are a human. If you don't solve this captcha in 10 minutes, you will be automatically kicked out of the group."
+                                tlg_send_message(bot, message.chat_id, "Regenerating CAPTCHA, give it another try", type=None)
+                                img_caption = "Please write the 4 numbers you see in the image to verify that you are a human."
                                 tlg_send_image(bot, message.chat_id, open(captcha["image"],"rb"), None, img_caption)
                             elif captchaModel is not None and captchaModel.solution != message.text.upper().replace(" ", ""):
                                 captchaModel.attemps=captchaModel.attemps-1
                                 s.merge(captchaModel)
                                 s.commit()
                                 intentos = captchaModel.attemps
-                                print("USER", usuario.username, "FAILED ONE CAPTCHA ATTEMP")
+                                print("USER", usuario.username, "FAILED ONE CAPTCHA ATTEMPT")
                                 if intentos == 0:
                                     self.banCaptcha(bot, message, usuario, from_user)
                                     return
-                                tlg_send_message(bot, message.chat_id, "❌ Wrong answer, you have " + str(intentos) + " of 50 attemps left", type=None )                      
+                                tlg_send_message(bot, message.chat_id, "❌ Sorry incorrect, give it another go", type=None )                      
                         elif usuario.verified == 1:
-                            tlg_send_message(bot, message.chat_id, "You have already completed the CAPTCHA, I don't know what you are doing wasting your time here, find something interesting to do with your life.", type=None)                       
+                            tlg_send_message(bot, message.chat_id, "You have already completed the CAPTCHA, nothing more to see here", type=None)                       
                         elif usuario is None:
                             print("3 Message from user {} is from chat_id not being monitored: {}".format(
                                 from_user,
