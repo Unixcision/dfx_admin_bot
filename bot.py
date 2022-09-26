@@ -22,6 +22,7 @@ import threading
 import locale
 import snscrape.modules.twitter
 import itertools
+import json
 import traceback
 import logging
 import xlsxwriter

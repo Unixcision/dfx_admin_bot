@@ -1,1 +1,1 @@
-Before you can post to the group you must complete a CAPTCHA. If you take more than 5 minutes you will be banned.
+❌ Message deleted. <a href="tg://user?id=1882290466">crypto</a> you are not authorized to post audios, documents, links, games or voice messages. Level up to remove these restrictions.
