@@ -438,6 +438,16 @@ def delete_message_by_type(bot, type, chat_id):
 class TelegramMonitorBot:
 
     def __init__(self):
+	TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+	CHAT_IDS = os.getenv("CHAT_IDS")
+	BOT_ALIAS = os.getenv("BOT_ALIAS")
+	NOTIFY_CHAT = os.getenv("NOTIFY_CHAT")
+
+	TELEGRAM_BOT_POSTGRES_URL = os.getenv("TELEGRAM_BOT_POSTGRES_URL")
+
+	TWITTER_URL = os.getenv("TWITTER_URL")
+	TWITTER_CHAT_ID = os.getenv("TWITTER_CHAT_ID")
+	
         print("init")
         self.debug = (
             (DEBUG is not None) and
