@@ -355,7 +355,7 @@ def clean_messages(bot):
             difference = datetime.now() - bot_message.sent_date
             minutes = difference.total_seconds() / 60
             types_to_delete = ("banned-from-command", "not-authorized", "welcome", "captcha", "image-guide") 
-            if (minutes > 5 and bot_message.type in types_to_delete) or (difference.total_seconds() > 20 and bot_message.type == "user-level"):
+            if (minutes > 10 and bot_message.type in types_to_delete) or (difference.total_seconds() > 20 and bot_message.type == "user-level"):
                 try:
                     bot.deleteMessage(message_id = bot_message.id, chat_id = CHAT_IDS)
                 except Exception as e:
@@ -665,19 +665,20 @@ class TelegramMonitorBot:
             s.close()
 
     def banCaptcha(self, bot, message, usuario, from_user):
-        tlg_send_message(bot, message.chat_id, "You have been banned for failing 3 attempts. Either you are a bot or you have vision problems. If you think it is an error write to @danicryptonews", type=None)
+        tlg_send_message(bot, message.chat_id, "You have been banned for failing 50 attempts. If you think it is an error write to @danicryptonews", type=None)
         s = session()
         checkban = s.query(UserBan).filter_by(UserBan.user_id==usuario.id).all()
         if checkban is not None:
             return
         userBan = UserBan(
             user_id=usuario.id,
-            reason="CAPTCHA failed 5 times")
+            reason="CAPTCHA failed 50 times")
         s.add(userBan)
         s.commit()
         s.close()
         print("USER", usuario.username, "FAILED THE CAPTCHA. BANNED.")
-        bot.kick_chat_member(chat_id=CHAT_IDS, user_id=from_user) 
+        # Removed banning command
+        # bot.kick_chat_member(chat_id=CHAT_IDS, user_id=from_user) 
         try:
             bot.deleteMessage(message_id = usuario.captcha_message, chat_id = CHAT_IDS)
         except Exception as e:
@@ -735,7 +736,7 @@ class TelegramMonitorBot:
                     if message.chat.type == "private":
                         # gets the initial value
                         if usuario is None:
-                            tlg_send_message(bot, message.chat_id, "You are not a @DFX_Finance user, you do not deserve my time.", type=None)
+                            tlg_send_message(bot, message.chat_id, "You are not a @DFX_Finance user. In order to interact with me you must join the group.", type=None)
                         elif usuario.username == "CotyKuhn" or usuario.username == "Negitaro" or usuario.username == "danicryptonews" or usuario.username == "naisechef" and message.text == "/bannedlist":
                             banned_list = s.query(UserBan).all()
                             try:
@@ -797,12 +798,12 @@ class TelegramMonitorBot:
                                 captchaModel = Captcha(
                                     id=None,
                                     user_id=usuario.id,
-                                    attemps=5,
+                                    attemps=50,
                                     solution=captcha_code
                                     )
                                 s.add(captchaModel)
                                 s.commit()                               
-                                img_caption = "Please write a message with the text in the image to verify that you are a human. If you don't solve this captcha in 5 minutes, you will be automatically banned of the group.\n\n📝 NOTE: If you find it hard you can write the command /new and receive a new one, but you will lose one attemp."
+                                img_caption = "Please write a message with the text in the image to verify that you are a human. If you don't solve this captcha in 10 minutes, you will be restricted on the group.\n\n📝 NOTE: If you find it hard you can write the command /new and receive a new one."
                                 tlg_send_image(bot, message.chat_id, open(captcha["image"],"rb"), None, img_caption)
                             elif message.text == "/new" and captchaModel is not None:
                                 captcha = create_image_captcha(message.chat_id, usuario.id, 1)       
@@ -816,8 +817,8 @@ class TelegramMonitorBot:
                                 if intentos == 0:
                                     self.banCaptcha(bot, message, usuario, from_user)
                                     return
-                                tlg_send_message(bot, message.chat_id, "Regenerating CAPTCHA, you have missed an opportunity, you have " + str(intentos) + " of 5 attemps left", type=None)
-                                img_caption = "Please write a message with the text in the image to verify that you are a human. If you don't solve this captcha in 5 minutes, you will be automatically kicked out of the group."
+                                tlg_send_message(bot, message.chat_id, "Regenerating CAPTCHA, you have missed an opportunity, you have " + str(intentos) + " of 50 attemps left", type=None)
+                                img_caption = "Please write a message with the text in the image to verify that you are a human. If you don't solve this captcha in 10 minutes, you will be automatically kicked out of the group."
                                 tlg_send_image(bot, message.chat_id, open(captcha["image"],"rb"), None, img_caption)
                             elif captchaModel is not None and captchaModel.solution != message.text.upper().replace(" ", ""):
                                 captchaModel.attemps=captchaModel.attemps-1
@@ -828,7 +829,7 @@ class TelegramMonitorBot:
                                 if intentos == 0:
                                     self.banCaptcha(bot, message, usuario, from_user)
                                     return
-                                tlg_send_message(bot, message.chat_id, "❌ Wrong answer, you have " + str(intentos) + " of 5 attemps left", type=None )                      
+                                tlg_send_message(bot, message.chat_id, "❌ Wrong answer, you have " + str(intentos) + " of 50 attemps left", type=None )                      
                         elif usuario.verified == 1:
                             tlg_send_message(bot, message.chat_id, "You have already completed the CAPTCHA, I don't know what you are doing wasting your time here, find something interesting to do with your life.", type=None)                       
                         elif usuario is None:
@@ -1426,19 +1427,25 @@ class TelegramMonitorBot:
     def price(self):
         # check self.cleanLast(bot, chat_id, message_id, "price")
         request = requests.post('https://api.jeroenmoonen.nl/dfx.json')
+        headers = {
+            'accept': 'application/json',
+        }
+        holders_request = requests.get('https://api.covalenthq.com/v1/1/tokens/0x888888435fde8e7d4c54cab67f206e4199454c60/token_holders/?quote-currency=USD&format=JSON&page-number=0&page-size=50000&key=ckey_c5a2a730f02844b49c29d2c4457')
+        response = requests.get('https://api.coingecko.com/api/v3/coins/dfx-finance', headers=headers)
         text = ''
-        if request.status_code == 200:
+        if request.status_code == 200 and response.status_code == 200 and holders_request.status_code == 200:
             data = request.json()
-            price=data['price']
+            datacg = response.json()
+            price=datacg['market_data']['current_price']['usd']
             satoshi=data['satoshi']
-            marketcap_btc=data['marketcap_btc']
+            marketcap_btc=datacg['market_data']['market_cap']['usd']
             circulating_supply=data['circulating_supply']
-            volume=data['volume']
-            todayHoldersEth = int(data['hodlers']['ethereum']['today'].replace(',', ''))
+            volume=datacg['market_data']['total_volume']['usd']
+            todayHoldersEth = len(json.loads(holders_request.text)['data']['items'])
             todayHoldersPoly = int(data['hodlers']['polygon']['today'].replace(',', ''))
             todayHolders = todayHoldersEth + todayHoldersPoly
             h_change=data['24h_change']           
-            text = '📊 <b>DFX stats at ' + str(datetime.now(timezone.utc).strftime("%Y/%m/%d %H:%M")) + '</b>\n<b>Price:</b>  ' + price + '\n<b>Sats:</b> ' + satoshi + '\n<b>MarketCap:</b> ' + marketcap_btc + '\n<b>Circulating Supply:</b> ' + circulating_supply + '\n<b>Volume:</b> ' + volume + '\n<b>Wallets:</b> ' + '{:,}'.format(todayHolders) + '\n<b>24h change:</b> ' + h_change
+            text = '📊 <b>DFX stats at ' + str(datetime.now(timezone.utc).strftime("%Y/%m/%d %H:%M")) + '</b>\n<b>Price:</b>  ' + str(price) + '$\n<b>Sats:</b> ' + satoshi + '\n<b>MarketCap:</b> ' + format(int(marketcap_btc),",") + '$\n<b>Circulating Supply:</b> ' + str(circulating_supply) + '\n<b>Volume:</b> ' + format(int(volume),",") + '$\n<b>Wallets:</b> ' + format(int(todayHolders),",") + '\n<b>24h change:</b> ' + h_change
         else:
             raise Exception('Query failed and return code is ' +  + '.      ' +  + ''.format(request.status_code,
                             query))                   
