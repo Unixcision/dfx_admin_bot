@@ -1461,6 +1461,16 @@ class TelegramMonitorBot:
 
         sub_env = '.env.' + environment
         load_dotenv(sub_env)  # load main .env file
+	
+	TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+	CHAT_IDS = os.getenv("CHAT_IDS")
+	BOT_ALIAS = os.getenv("BOT_ALIAS")
+	NOTIFY_CHAT = os.getenv("NOTIFY_CHAT")
+
+	TELEGRAM_BOT_POSTGRES_URL = os.getenv("TELEGRAM_BOT_POSTGRES_URL")
+
+	TWITTER_URL = os.getenv("TWITTER_URL")
+	TWITTER_CHAT_ID = os.getenv("TWITTER_CHAT_ID")
 
         """ Start the bot. """
         global bot
