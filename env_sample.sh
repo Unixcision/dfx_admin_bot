@@ -1,32 +1,12 @@
 # Example env vars for bot
-# Copy this to `env.sh` and edit with your real vars -- it is ignored by git
+# Copy this to .env.<name> and edit with your real vars then add that file to .gitignore so that it is ignored by git
 
-export TELEGRAM_BOT_POSTGRES_URL="postgresql://localhost/postgres"
+TELEGRAM_BOT_TOKEN = "< enter bot token here >"
+CHAT_IDS = "< chat id in format -12345 >"
+BOT_ALIAS = "<n ame here >"
+NOTIFY_CHAT = "< notify chat id in format -12345 >"
 
-read -r -d '' MESSAGE_BAN_PATTERNS << 'EOF'
-# ETH
-# e.g. F8C8405e85Cfe42551DEfeB2a4548A33bb3DF840
-[0-9a-fA-F]{40,40}
-# BTC
-# e.g. 13qt9rCA2CQLZedmUuDiPkwdcAJLsuTvLm
-|[0-9a-zA-Z]{34,34}
-EOF
+TELEGRAM_BOT_POSTGRES_URL = "postgresql://postgres:< URL HEREE >.@localhost:< PORT >/< NAME >"
 
-read -r -d '' MESSAGE_HIDE_PATTERNS << 'EOF'
-# ETH
-# e.g. F8C8405e85Cfe42551DEfeB2a4548A33bb3DF840
-|[0-9a-fA-F]{40,40}
-# BTC
-# e.g. 13qt9rCA2CQLZedmUuDiPkwdcAJLsuTvLm
-|[0-9a-zA-Z]{34,34}
-EOF
-
-export TELEGRAM_BOT_TOKEN="XXXXXXXXX:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-
-export NAME_BAN_PATTERNS="admin$"
-
-export CHAT_IDS="-250531994"
-
-# Needed to make these env vars visible to python
-export MESSAGE_BAN_PATTERNS=$MESSAGE_BAN_PATTERNS
-export MESSAGE_HIDE_PATTERNS=$MESSAGE_HIDE_PATTERNS
+TWITTER_URL = 'https://api.telegram.org/bot5152963750:AAHQl4F3_40KHjtkeRpIGriYY95IwsoAcLc/sendMessage'
+TWITTER_CHAT_ID = '-1001663037023'

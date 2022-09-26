@@ -1,3 +1,5 @@
+#.gitignore
+
 # Never commit config data
 config.cnf
 
@@ -25,3 +27,16 @@ var/
 *.egg
 
 origin-telegram-logger-bot
+
+# environment variables
+.env
+.env.dani
+.env.chef
+.env.test
+.env.prod
+
+# virtual environment
+/venv
+
+# old versions
+old*.*
