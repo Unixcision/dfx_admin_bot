@@ -615,12 +615,12 @@ class TelegramMonitorBot:
                     [InlineKeyboardButton(text='Check out our Linktree', url='https://linktr.ee/dfxfinance')]
             ])
             tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup)
-            messageCaptcha = "Before you can post to the group you must complete a CAPTCHA, do this and all your questions will be answered."
-            reply_markup_captcha = InlineKeyboardMarkup([
-                    [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
-            ])
-            delete_message_by_type(context.bot, "captcha", update.effective_chat.id)
-            msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha)
+            # messageCaptcha = "Before you can post to the group you must complete a CAPTCHA, do this and all your questions will be answered."
+            # reply_markup_captcha = InlineKeyboardMarkup([
+            #         [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
+            # ])
+            # delete_message_by_type(context.bot, "captcha", update.effective_chat.id)
+            # msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha)
             
             user = update.chat_member.new_chat_member.user
             if not self.id_exists(user.id):
@@ -629,7 +629,8 @@ class TelegramMonitorBot:
                     user.first_name,
                     user.last_name,
                     user.username,
-                    0,msg['msg'].message_id)
+                    1,0)
+                    #1,msg['msg'].message_id)
 
                 if add_user_success:
                     print("User added: {}".format(user.id))
@@ -638,21 +639,22 @@ class TelegramMonitorBot:
             else:
                 s = session()
                 usuario = s.query(User).filter_by(id=user.id).first()  # gets the initial value            
-                usuario.captcha_messsage=msg['msg'].message_id
+                #usuario.captcha_messsage=msg['msg'].message_id
+                usuario.captcha_messsage=0
                 s.merge(usuario)
                 s.commit()
                 s.close()
-            permissions = ChatPermissions(
-                can_send_messages=False,
-                can_send_media_messages=False,
-                can_send_polls=False,
-                can_send_other_messages=False,
-                can_add_web_page_previews=False,
-                can_change_info=False,
-                can_invite_users=False,
-                can_pin_messages=False,
-            )
-            context.bot.restrict_chat_member(update.effective_chat.id, user.id, permissions)          
+            #permissions = ChatPermissions(
+            #    can_send_messages=False,
+            #    can_send_media_messages=False,
+            #    can_send_polls=False,
+            #    can_send_other_messages=False,
+            #    can_add_web_page_previews=False,
+            #    can_change_info=False,
+            #    can_invite_users=False,
+            #    can_pin_messages=False,
+            #)
+            #context.bot.restrict_chat_member(update.effective_chat.id, user.id, permissions)          
 
         
     def security_check_username(self, bot, update):
