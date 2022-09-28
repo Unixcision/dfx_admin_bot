@@ -505,7 +505,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -1277,6 +1277,30 @@ class TelegramMonitorBot:
             delete_message_by_type(bot, "image-guide", chat_id)
             caption = "<b>Forum</b>\nhttps://forum.dfx.finance/\n\n<b>Voting</b>\nhttps://vote.dfx.finance/#/\n\n<b>Docs</b>\nhttps://docs.dfx.finance/\n\n<b>Proposal Template</b>\nhttps://docs.google.com/document/d/1ghkenFXHT5n0OtdsE0BWgmaJj2JS5Rg4/edit?usp=sharing&ouid=109120569613830820828&rtpof=true&sd=true"
             tlg_send_image(bot, chat_id, open(image, 'rb'), "image-guide", caption=caption, parse_mode="HTML")
+        if command == "/enablewelcome":
+            if is_admin and self.admin_exempt:
+                welcome = s.query(MiscData).filter_by(key = "welcome_msg").first()
+                welcome.data = "true"
+                s.merge(welcome)
+                s.commit()
+        if command == "/disablewelcome":
+            if is_admin and self.admin_exempt:
+                welcome = s.query(MiscData).filter_by(key = "welcome_msg").first()
+                welcome.data = "false"
+                s.merge(welcome)
+                s.commit()
+        if command == "/enablecaptcha":
+            if is_admin and self.admin_exempt:
+                captcha = s.query(MiscData).filter_by(key = "captcha").first()
+                captcha.data = "true"
+                s.merge(captcha)
+                s.commit()
+        if command == "/disablecaptcha":
+            if is_admin and self.admin_exempt:
+                captcha = s.query(MiscData).filter_by(key = "captcha").first()
+                captcha.data = "false"
+                s.merge(captcha)
+                s.commit()
         if command != None:
             bot.deleteMessage(message_id = update.message.message_id, chat_id = chat_id)
         s.close()
