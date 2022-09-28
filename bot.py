@@ -582,6 +582,9 @@ class TelegramMonitorBot:
     def onjoin(self, update, context):
         print("onjoin")
         context.bot.delete_message(chat_id=update.message.chat_id,message_id=update.message.message_id)
+    def onleft(self, update, context):
+        print("onleft")
+        context.bot.delete_message(chat_id=update.message.chat_id,message_id=update.message.message_id)
         
     def greet_chat_members(self, update, context):
         print("greet_chat_members")
@@ -609,18 +612,26 @@ class TelegramMonitorBot:
                     s.close()
                     return
             s.close()
-            delete_message_by_type(context.bot, "welcome", update.effective_chat.id)
-            message = f"Hello and Welcome {member_name} to the Official DFX Finance Telegram Channel! 🔥🐉\n\nThank you so much for taking the time to stop by and from all of us at DFX, we hope you have a great day! ☀️"
-            reply_markup = InlineKeyboardMarkup([
-                    [InlineKeyboardButton(text='Check out our Linktree', url='https://linktr.ee/dfxfinance')]
-            ])
-            tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup)
-            # messageCaptcha = "Before you can post to the group you must complete a CAPTCHA, do this and all your questions will be answered."
-            # reply_markup_captcha = InlineKeyboardMarkup([
-            #         [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
-            # ])
-            # delete_message_by_type(context.bot, "captcha", update.effective_chat.id)
-            # msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha)
+            captcha_config = s.query(MiscData).filter_by(key = "captcha").first().data
+            welcome_config = s.query(MiscData).filter_by(key = "welcome_msg").first().data
+            print("New member!\nCaptcha: " + captcha_config + "\nWelcome Msg: " + welcome_config)
+            if welcome_config == 'true':
+                delete_message_by_type(context.bot, "welcome", update.effective_chat.id)
+                message = f"Hello and Welcome {member_name} to the Official DFX Finance Telegram Channel! 🔥🐉\n\nThank you so much for taking the time to stop by and from all of us at DFX, we hope you have a great day! ☀️"
+                reply_markup = InlineKeyboardMarkup([
+                        [InlineKeyboardButton(text='Check out our Linktree', url='https://linktr.ee/dfxfinance')]
+                ])
+                tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup)
+            if captcha_config == 'true':
+                messageCaptcha = "Before you can post to the group you must complete a CAPTCHA, do this and all your questions will be answered."
+                reply_markup_captcha = InlineKeyboardMarkup([
+                        [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
+                ])
+                delete_message_by_type(context.bot, "captcha", update.effective_chat.id)
+                msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha)
+                captcha_msg = msg['msg'].message_id
+            else:
+                captcha_msg = 0
             
             user = update.chat_member.new_chat_member.user
             if not self.id_exists(user.id):
@@ -629,32 +640,33 @@ class TelegramMonitorBot:
                     user.first_name,
                     user.last_name,
                     user.username,
-                    1,0)
-                    #1,msg['msg'].message_id)
-
+                    1,captcha_msg)
                 if add_user_success:
                     print("User added: {}".format(user.id))
                 else:
                     print("Something went wrong adding the user {}".format(user.id), file=sys.stderr)
             else:
                 s = session()
-                usuario = s.query(User).filter_by(id=user.id).first()  # gets the initial value            
-                #usuario.captcha_messsage=msg['msg'].message_id
-                usuario.captcha_messsage=0
+                usuario = s.query(User).filter_by(id=user.id).first()  # gets the initial value     
+                if captcha_config == 'true':
+                    usuario.captcha_messsage=msg['msg'].message_id
+                else:
+                    usuario.captcha_messsage=0
                 s.merge(usuario)
                 s.commit()
                 s.close()
-            #permissions = ChatPermissions(
-            #    can_send_messages=False,
-            #    can_send_media_messages=False,
-            #    can_send_polls=False,
-            #    can_send_other_messages=False,
-            #    can_add_web_page_previews=False,
-            #    can_change_info=False,
-            #    can_invite_users=False,
-            #    can_pin_messages=False,
-            #)
-            #context.bot.restrict_chat_member(update.effective_chat.id, user.id, permissions)          
+            if captcha_config == 'true':
+                permissions = ChatPermissions(
+                    can_send_messages=False,
+                    can_send_media_messages=False,
+                    can_send_polls=False,
+                    can_send_other_messages=False,
+                    can_add_web_page_previews=False,
+                    can_change_info=False,
+                    can_invite_users=False,
+                    can_pin_messages=False,
+                )
+                context.bot.restrict_chat_member(update.effective_chat.id, user.id, permissions)          
 
         
     def security_check_username(self, bot, update):
@@ -1169,7 +1181,7 @@ class TelegramMonitorBot:
             tlg_send_message(bot, chat_id, self.price(), "price")
         if command == "/whalechart":
             delete_message_by_type(bot, "whalechart", chat_id)
-            tlg_send_message(bot, chat_id, "500 DFX - Shrimp 🦐 \n500 - 2000 DFX - Crab 🦀 \n2K - 10K DFX - Tropical Fish 🐠 \n10K - 20K DFX - Dolphin 🐬 \n20K - 30K DFX - Shark 🦈 \n30K - 50K DFX - Baby Whale 🐳 \n50K - 100K DFX - Whale 🐋 \n100K - 200K DFX - Dragon 🐉 \n200K++ DFX - Mythical Dragon 🐲", "whalechart")
+            tlg_send_message(bot, chat_id, "500 DFX - Shrimp 🦐 \n500 - 2000 DFX - Crab 🦀 \n2K - 10K DFX - Tropical Fish 🐠 \n10K - 20K DFX - Octopus 🐙 \n20K - 30K DFX - Dolphin 🐬 \n30K - 50K DFX - Shark 🦈 \n50K - 75K DFX - Baby Whale 🐳 \n75K - 100K DFX - Whale 🐋 \n100K - 200K DFX - Dragon 🐉 \n200K++ DFX - Mythical Dragon 🐲", "whalechart")
         if command == "/unban":
             if is_admin and self.admin_exempt:
                 self.unban_command(bot, update, chat_id, (command + " "))
@@ -1504,7 +1516,7 @@ class TelegramMonitorBot:
         TWITTER_CHAT_ID = os.getenv("TWITTER_CHAT_ID")
 
         """ Start the bot. """
-        global bot
+#        global bot
 #        app = Client(
 #            "bot",
 #            bot_token=TELEGRAM_BOT_TOKEN,
@@ -1515,6 +1527,7 @@ class TelegramMonitorBot:
 #        listMembers = []
 #        for x in app.get_chat_members("DFX_Finance"):
 #            try:
+#                print("User added")
 #                self.add_user(
 #                x.user.id,
 #                x.user.first_name,
@@ -1541,6 +1554,7 @@ class TelegramMonitorBot:
         )
         
         dp.add_handler(MessageHandler(Filters.status_update.new_chat_members,self.onjoin))
+        dp.add_handler(MessageHandler(Filters.status_update.left_chat_member,self.onleft))
         # on noncommand i.e message - echo the message on Telegram
         filters = Filters.all and ~Filters.status_update.new_chat_members
         dp.add_handler(MessageHandler(
@@ -1585,4 +1599,3 @@ class TelegramMonitorBot:
 if __name__ == "__main__":
     c = TelegramMonitorBot()
     c.start()
-
