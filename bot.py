@@ -1230,9 +1230,9 @@ class TelegramMonitorBot:
             admins = bot.get_chat_administrators(CHAT_IDS, timeout=20)
             admins_to_exclude = []
             for admin in admins:
-                admins_to_exclude.append(admin.user.username)
+                admins_to_exclude.append(admin.user.id)
             print("Group admins", admins_to_exclude)
-            top10users = s.query(User).filter(User.username.notin_(admins_to_exclude)).order_by(User.popularity.desc(), User.reputation.desc(), User.message_count.desc()).limit(10).all()
+            top10users = s.query(User).filter(User.id.notin_(admins_to_exclude)).order_by(User.popularity.desc(), User.reputation.desc(), User.message_count.desc()).limit(10).all()
             textTop10 = "<b>🏆 TOP 10 USERS BY LEVEL 🏆</b>\n\n"
             arrayNumberEmojis = "4️⃣_5️⃣_6️⃣_7️⃣_8️⃣_9️⃣_🔟"
             i = 1
