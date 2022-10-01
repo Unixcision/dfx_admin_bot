@@ -40,3 +40,6 @@ origin-telegram-logger-bot
 
 # old versions
 old*.*
+
+bot.session
+readme.txt
