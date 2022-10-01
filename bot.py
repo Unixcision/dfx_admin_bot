@@ -381,6 +381,9 @@ def clean_messages(bot):
         s.close()
         
 def twitter_reader(bot):
+    if environment == 'test':
+        print("Disable Tweet reader in test environment")
+        return
     while True:    
         s = session()    
         scraper = snscrape.modules.twitter.TwitterSearchScraper('from:@DFXFinance since:2022-05-31 -filter:replies').get_items()
@@ -1228,7 +1231,8 @@ class TelegramMonitorBot:
             admins_to_exclude = []
             for admin in admins:
                 admins_to_exclude.append(admin.user.username)
-            top10users = s.query(User).filter(User.username.not_in(admins_to_exclude)).order_by(User.popularity.desc(), User.reputation.desc(), User.message_count.desc()).limit(10).all()
+            print("Group admins", admins_to_exclude)
+            top10users = s.query(User).filter(User.username.notin_(admins_to_exclude)).order_by(User.popularity.desc(), User.reputation.desc(), User.message_count.desc()).limit(10).all()
             textTop10 = "<b>🏆 TOP 10 USERS BY LEVEL 🏆</b>\n\n"
             arrayNumberEmojis = "4️⃣_5️⃣_6️⃣_7️⃣_8️⃣_9️⃣_🔟"
             i = 1

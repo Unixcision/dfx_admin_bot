@@ -2,10 +2,16 @@ from sqlalchemy import Column, DateTime, BigInteger, String, Integer, Numeric, F
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 import os
+from dotenv import load_dotenv
 
+load_dotenv('.env')  # load main .env file
+environment = os.getenv("ENVIRONMENT")
+sub_env = '.env.' + environment
+load_dotenv(sub_env)  # load main .env file
 # Localhost url: postgresql://localhost/postgres
-postgres_url = "postgresql://postgres:Elias365.@localhost:5432/dfxbot"
-
+TELEGRAM_BOT_POSTGRES_URL = os.getenv("TELEGRAM_BOT_POSTGRES_URL")
+postgres_url = TELEGRAM_BOT_POSTGRES_URL
+print("POSTGRES URL", TELEGRAM_BOT_POSTGRES_URL)
 
 '''
 This model has been referenced from: https://www.pythoncentral.io/sqlalchemy-orm-examples/
