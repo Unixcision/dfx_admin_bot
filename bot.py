@@ -1224,7 +1224,11 @@ class TelegramMonitorBot:
             tlg_send_message(bot, chat_id, "👑 Hey " + message.from_user.mention_html() + ", you are <b>level " + str(user.popularity) + "</b> 👑", "user-level")
         if command == "/top10level":
             delete_message_by_type(bot, "rank", chat_id)
-            top10users = s.query(User).order_by(User.popularity.desc(), User.reputation.desc(), User.message_count.desc()).limit(10).all()
+            admins = bot.get_chat_administrators(CHAT_IDS, timeout=20)
+            admins_to_exclude = []
+            for admin in admins:
+                admins_to_exclude.append(admin.user.username)
+            top10users = s.query(User).filter(User.username.not_in(admins_to_exclude)).order_by(User.popularity.desc(), User.reputation.desc(), User.message_count.desc()).limit(10).all()
             textTop10 = "<b>🏆 TOP 10 USERS BY LEVEL 🏆</b>\n\n"
             arrayNumberEmojis = "4️⃣_5️⃣_6️⃣_7️⃣_8️⃣_9️⃣_🔟"
             i = 1
