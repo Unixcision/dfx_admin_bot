@@ -420,8 +420,6 @@ def tlg_send_message(bot, chat_id, message, type, reply_markup=None, reply_to_me
     sent_result = dict()
     sent_result["msg"] = None
     sent_result["error"] = ""
-    with open('readme.txt', 'w') as f:
-        f.write(message)
     try:
         sent_result["msg"] = bot.send_message(chat_id, message, reply_to_message_id=reply_to_message_id, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     except TelegramError as e:
@@ -442,6 +440,31 @@ def tlg_send_message(bot, chat_id, message, type, reply_markup=None, reply_to_me
         print("Error[347]: {}".format(e))
         print(traceback.format_exc())
     return sent_result 
+    
+def tlg_reply_message(message, text, type):
+    print("tlg_reply_message")        
+    sent_result = dict()
+    sent_result["msg"] = None
+    sent_result["error"] = ""
+    try:
+        sent_result["msg"] = message.reply_text(text=text, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+    except TelegramError as e:
+        sent_result["error"] = str(e)
+        print("[{}] {}".format(message.chat_id, sent_result["error"]))
+    try:
+        if type is not None:
+            s = session()
+            botmessages = BotMessages(
+                id=sent_result["msg"].message_id,
+                type=type,
+                sent_date=func.now()
+                )
+            s.add(botmessages)
+            s.commit()
+            s.close()
+    except Exception as e:
+        print("Error[347]: {}".format(e))
+        print(traceback.format_exc())
     
 def delete_message_by_type(bot, type, chat_id):
     '''Bot try to delete message by type'''
@@ -510,7 +533,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -1151,7 +1174,7 @@ class TelegramMonitorBot:
         print("command: {} seen in chat_id {}".format(command, chat_id))
         if BOT_ALIAS in command:
             command = command.replace("@" + BOT_ALIAS, "")
-        if command != None:
+        if command != None and command not in ["/contract", "/website", "/twitter", "/medium"]:
             bot.deleteMessage(message_id = update.message.message_id, chat_id = chat_id)
         if command == "/dragon":
             n = random.randint(1,59)
@@ -1313,6 +1336,18 @@ class TelegramMonitorBot:
                 captcha.data = "false"
                 s.merge(captcha)
                 s.commit()       
+        if command == "/contract":
+            delete_message_by_type(bot, "contract", chat_id)
+            tlg_reply_message(message, "<b><u>DFX Contract Addresses:</u></b>\n<b>Polygon</b>\n<code>0xE7804D91dfCDE7F776c90043E03eAa6Df87E6395</code>\n<b>Ethereum</b>\n<code>0x888888435FDe8e7d4c54cAb67f206e4199454c60</code>", "contract")
+        if command == "/website":
+            delete_message_by_type(bot, "website", chat_id)
+            tlg_reply_message(message, "http://dfx.finance/", "website")
+        if command == "/twitter":
+            delete_message_by_type(bot, "twitter", chat_id)
+            tlg_reply_message(message, "https://twitter.com/DFXFinance", "twitter")
+        if command == "/medium":
+            delete_message_by_type(bot, "medium", chat_id)
+            tlg_reply_message(message, "https://medium.com/@dfxfinance/", "medium")
         s.close()
         
     def ban_command(self, bot, update, chat_id, silent, command):
