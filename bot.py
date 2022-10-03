@@ -44,6 +44,9 @@ from textblob import TextBlob
 from multicolorcaptcha import CaptchaGenerator
 from random import choice, randint
 
+import asyncio
+import uvloop
+
 from os import path, makedirs, remove
 from dotenv import load_dotenv
 
@@ -1148,6 +1151,8 @@ class TelegramMonitorBot:
         print("command: {} seen in chat_id {}".format(command, chat_id))
         if BOT_ALIAS in command:
             command = command.replace("@" + BOT_ALIAS, "")
+        if command != None:
+            bot.deleteMessage(message_id = update.message.message_id, chat_id = chat_id)
         if command == "/dragon":
             n = random.randint(1,59)
             image = "dfx_dragon_images/Image" + str(n) + ".jpg"
@@ -1307,9 +1312,7 @@ class TelegramMonitorBot:
                 captcha = s.query(MiscData).filter_by(key = "captcha").first()
                 captcha.data = "false"
                 s.merge(captcha)
-                s.commit()
-        if command != None:
-            bot.deleteMessage(message_id = update.message.message_id, chat_id = chat_id)
+                s.commit()       
         s.close()
         
     def ban_command(self, bot, update, chat_id, silent, command):
@@ -1517,11 +1520,17 @@ class TelegramMonitorBot:
             print("No changes from last refresh")
         print("Clicked")
             
-    def price(self, bot, chat_id):          
+    def price(self, bot, chat_id):      
+        msg = tlg_send_message(bot, chat_id, "⏳ <i>Fetching data...</i>", "price")              
         reply_markup_price = InlineKeyboardMarkup([
                 [InlineKeyboardButton(text='🔄 Refresh data', callback_data="refresh")]
         ])
-        tlg_send_message(bot, chat_id, self.priceText(), "price", reply_markup=reply_markup_price)              
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=msg['msg'].message_id,
+            text=self.priceText(),
+            parse_mode='HTML',
+            reply_markup=reply_markup_price)             
         
     def priceText(self):
         # check self.cleanLast(bot, chat_id, message_id, "price")
@@ -1654,4 +1663,5 @@ class TelegramMonitorBot:
 
 if __name__ == "__main__":
     c = TelegramMonitorBot()
+    uvloop.install()
     c.start()
