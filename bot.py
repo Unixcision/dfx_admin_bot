@@ -33,11 +33,10 @@ from time import strftime, time, sleep
 from datetime import datetime, timedelta, timezone
 from typing import Tuple, Optional
 from urlextract import URLExtract
-
+from telegram import *
+from telegram.ext import * 
+from requests import *
 from sqlalchemy import func
-import requests
-from telegram import Update, Chat, ChatMember, ParseMode, ChatMemberUpdated, InlineKeyboardMarkup, InlineKeyboardButton, ChatPermissions, TelegramError
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, ChatMemberHandler
 from model import User, Message, MessageHide, UserBan, session, engine, BotMessages, Captcha, MiscData, Tweets, UserReputation
 from mwt import MWT
 from googletrans import Translator
@@ -1181,7 +1180,7 @@ class TelegramMonitorBot:
             tlg_send_image(bot, chat_id, open(image, 'rb'), "image")
         if command == "/price":
             delete_message_by_type(bot, "price", chat_id)
-            tlg_send_message(bot, chat_id, self.price(), "price")
+            self.price(bot, chat_id)
         if command == "/whalechart":
             delete_message_by_type(bot, "whalechart", chat_id)
             tlg_send_message(bot, chat_id, "500 DFX - Shrimp 🦐 \n500 - 2000 DFX - Crab 🦀 \n2K - 10K DFX - Tropical Fish 🐠 \n10K - 20K DFX - Octopus 🐙 \n20K - 30K DFX - Dolphin 🐬 \n30K - 50K DFX - Shark 🦈 \n50K - 75K DFX - Baby Whale 🐳 \n75K - 100K DFX - Whale 🐋 \n100K - 200K DFX - Dragon 🐉 \n200K++ DFX - Mythical Dragon 🐲", "whalechart")
@@ -1499,7 +1498,32 @@ class TelegramMonitorBot:
         print("Update caused error ",
             file=sys.stderr)
             
-    def price(self):
+    def queryHandler(self, update: Update, context: CallbackContext):
+        query = update.callback_query
+        query.answer()
+        bot = context.bot
+        reply_markup_price = InlineKeyboardMarkup([
+                [InlineKeyboardButton(text='🔄 Refresh data', callback_data="refresh")]
+        ])
+        try:
+            bot.edit_message_text(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text=self.priceText(),
+            parse_mode='HTML',
+            reply_markup=reply_markup_price
+            )
+        except:
+            print("No changes from last refresh")
+        print("Clicked")
+            
+    def price(self, bot, chat_id):          
+        reply_markup_price = InlineKeyboardMarkup([
+                [InlineKeyboardButton(text='🔄 Refresh data', callback_data="refresh")]
+        ])
+        tlg_send_message(bot, chat_id, self.priceText(), "price", reply_markup=reply_markup_price)              
+        
+    def priceText(self):
         # check self.cleanLast(bot, chat_id, message_id, "price")
         request = requests.post('https://api.jeroenmoonen.nl/dfx.json')
         headers = {
@@ -1523,10 +1547,10 @@ class TelegramMonitorBot:
             text = '📊 <b>DFX stats at ' + str(datetime.now(timezone.utc).strftime("%Y/%m/%d %H:%M")) + '</b>\n<b>Price:</b>  ' + str(price) + '$\n<b>Sats:</b> ' + satoshi + '\n<b>MarketCap:</b> ' + format(int(marketcap_btc),",") + '$\n<b>Circulating Supply:</b> ' + str(circulating_supply) + '\n<b>Volume:</b> ' + format(int(volume),",") + '$\n<b>Wallets:</b> ' + format(int(todayHolders),",") + '\n<b>24h change:</b> ' + h_change
         else:
             raise Exception('Query failed and return code is ' +  + '.      ' +  + ''.format(request.status_code,
-                            query))                   
-        return text  
+                            query))               
+        return text
         
-
+        
     def start(self):
         print("start")
 
@@ -1584,7 +1608,7 @@ class TelegramMonitorBot:
                 filters=Filters.all,
             )
         )
-        
+        dp.add_handler(CallbackQueryHandler(self.queryHandler))
         dp.add_handler(MessageHandler(Filters.status_update.new_chat_members,self.onjoin))
         dp.add_handler(MessageHandler(Filters.status_update.left_chat_member,self.onleft))
         # on noncommand i.e message - echo the message on Telegram
