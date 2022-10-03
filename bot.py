@@ -533,7 +533,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -1348,6 +1348,10 @@ class TelegramMonitorBot:
         if command == "/medium":
             delete_message_by_type(bot, "medium", chat_id)
             tlg_reply_message(message, "https://medium.com/@dfxfinance/", "medium")
+        if command == "/delmsg":
+            if is_admin and self.admin_exempt:
+                bot.delete_message(chat_id=chat_id,
+                   message_id=update.message.reply_to_message.message_id)
         s.close()
         
     def ban_command(self, bot, update, chat_id, silent, command):
