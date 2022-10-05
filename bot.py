@@ -697,7 +697,7 @@ class TelegramMonitorBot:
                     can_invite_users=False,
                     can_pin_messages=False,
                 )
-                bot.restrict_chat_member(update.effective_chat.id, user.id, permissions)          
+                context.bot.restrict_chat_member(update.effective_chat.id, user.id, permissions)          
 
         
     def security_check_username(self, bot, update):
@@ -1393,7 +1393,7 @@ class TelegramMonitorBot:
                     can_invite_users=True,
                     can_pin_messages=True,
                 )
-                context.bot.restrict_chat_member(chat_id, user_id, permissions)  
+                bot.restrict_chat_member(chat_id, user_id, permissions)  
                 print("USER UNBANNED!!!")
         s.close()
         
