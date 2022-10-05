@@ -122,7 +122,6 @@ welcome_messages = (
 "Hello lovely user, hope you are having a good day",
 "Hello friend, I love people with manners. How are you?",
 "Hellooooo!!! :) What a nice day to do manage a group, don't you think so?",
-"Hi, nice to meet you! I invite you to eat cans and screws, do you want to try it?"
 )
 to_delete_in_time_messages_list = []
 new_users = {}
