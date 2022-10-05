@@ -1482,6 +1482,8 @@ class TelegramMonitorBot:
                 s.merge(user_unban)
                 s.commit()
                 print(user_to_unban, "unbanned!!!")
+        elif len(combinacion) == 2 and combinacion[1].isdecimal():
+            bot.unban_chat_member(chat_id, int(combinacion[1]))
         elif len(combinacion) > 1:
             # Desbanear con alias o nombre
             if '@' in combinacion[1]:
