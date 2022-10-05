@@ -1217,34 +1217,7 @@ class TelegramMonitorBot:
                 self.unban_command(bot, update, chat_id, (command + " "))
         if command == "/levelup":
             if is_admin and self.admin_exempt:
-                if "@" in update.message.text:
-                    combinacion = update.message.text.replace("@", "").split(' ')
-                    user = s.query(User).filter(User.username==combinacion[1]).first()
-                    if user is None:
-                        print("User not found")
-                    else:                    
-                        user.popularity = int(combinacion[2])
-                        s.merge(user)
-                        s.commit()      
-                else:  
-                    combinacion = update.message.text.split(' ')
-                    if len(combinacion) > 3:
-                        nombre = combinacion[1] + " " + combinacion[2]
-                        user = s.query(User).filter(User.first_name==nombre).first()
-                        if user is None:
-                            print("User not found")
-                        else:                    
-                            user.popularity = int(combinacion[2])
-                            s.merge(user)
-                            s.commit()  
-                    else:
-                        user = s.query(User).filter(User.first_name==combinacion[1]).first()
-                        if user is None:
-                            print("User not found")
-                        else:                    
-                            user.popularity = int(combinacion[2])
-                            s.merge(user)
-                            s.commit()             
+                self.level_up(bot, update, chat_id, (command + " ")) 
         if command == "/ban":
             if is_admin and self.admin_exempt:
                 silent = False
@@ -1356,175 +1329,109 @@ class TelegramMonitorBot:
         
     def ban_command(self, bot, update, chat_id, silent, command):
         # Es admin, continúo
+        text = update.message.text.replace(command, '')
         s = session()
-        combinacion = update.message.text.split(' ')
-        if update.message.reply_to_message is not None:
-            # Banear con mención
+        user_id = self.get_user_id(text, update, s)
+        print("Going to ban user_id", user_id)
+        if user_id == '' or user_id is None:
+            print("FAILED TO UNBAN USER: NOT FOUND")
+        else:
             delete_message_by_type(bot, "banned-from-command", chat_id)
             reason = "Banned by admin " + update.message.from_user.username
-            self.ban_user_from_message(bot, update, update.message.reply_to_message, reason=reason, deleteAll=False)
+            self.ban_user_from_id(bot, user_id, reason=reason)
             delete_message_by_type(bot, "banned-from-command", CHAT_IDS)
             if silent == False:
                 tlg_send_message(bot, CHAT_IDS, "⛔️ User " + update.message.reply_to_message.from_user.mention_html() + " has been banned", "banned-from-command")
-        elif len(combinacion) > 1:
-            # Banear con alias o nombre
-            if '@' in combinacion[1]:
-                # Banear con alias
-                user_to_ban = combinacion[1].replace("@", "").replace(" ", "")
-                print("Going to ban", user_to_ban)              
-                user_ban = s.query(User).filter(User.username==user_to_ban).first()            
-                if len(user_to_ban) > 3 and user_ban is not None:
-                    self.ban_user_from_id(bot, user_ban.id, reason="Banned by admin " + update.message.from_user.username)
-                    delete_message_by_type(bot, "banned-from-command", CHAT_IDS)
-                    if silent == False:
-                        tlg_send_message(bot, CHAT_IDS, '⛔️ User ' + '<a href="tg://user?id=' + str(user_ban.id) + '">' + user_ban.first_name + '</a>' + ' has been banned', "banned-from-command")
-                    print(user_to_ban, "banned!!!")
-                else:
-                    print("User not found")
-                    s.close()
-                    return
-                s.close()
-            else:
-                # Banear con nombre
-                nombre = ""
-                if len(combinacion) > 2:
-                    nombre = update.message.text.replace(command, "")
-                else:
-                    nombre = combinacion[1]
-                user_to_ban = nombre
-                print("Going to ban", user_to_ban)              
-                user_ban = s.query(User).filter(User.first_name==user_to_ban).first()            
-                if len(user_to_ban) > 3 and user_ban is not None:
-                    self.ban_user_from_id(bot, user_ban.id, reason="Banned by admin " + update.message.from_user.username)
-                    delete_message_by_type(bot, "banned-from-command", CHAT_IDS)
-                    if silent == False:
-                        tlg_send_message(bot, CHAT_IDS, '⛔️ User ' + '<a href="tg://user?id=' + str(user_ban.id) + '">' + user_ban.first_name + '</a>' + ' has been banned', "banned-from-command")
-                    print(user_to_ban, "banned!!!")
-                else:
-                    print("User not found")
-                    s.close()
-                    return
         s.close()
                 
     def hard_ban_command(self, bot, update, chat_id, silent, command):
         # Es admin, continúo
-        combinacion = update.message.text.split(' ')
+        text = update.message.text.replace(command, '')
         s = session()
-        if update.message.reply_to_message is not None:
-            # Banear con mención
+        user_id = self.get_user_id(text, update, s)
+        print("Going to ban user_id", user_id)
+        if user_id == '' or user_id is None:
+            print("FAILED TO UNBAN USER: NOT FOUND")
+        else:
             delete_message_by_type(bot, "banned-from-command", chat_id)
             reason = "Banned by admin " + update.message.from_user.username
-            self.ban_user_from_message(bot, update, update.message.reply_to_message, reason=reason, deleteAll=False)
+            self.ban_user_from_id(bot, user_id, reason=reason)
             delete_message_by_type(bot, "banned-from-command", CHAT_IDS)
-            self.delete_messages_from_id(bot, update.message.reply_to_message.from_user.id)
+            self.delete_messages_from_id(bot, user_id)
             if silent == False:
                 tlg_send_message(bot, CHAT_IDS, "⛔️ User " + update.message.reply_to_message.from_user.mention_html() + " has been banned", "banned-from-command")
-        elif len(combinacion) > 1:
-            # Banear con alias o nombre
-            if '@' in combinacion[1]:
-                # Banear con alias
-                user_to_ban = combinacion[1].replace("@", "").replace(" ", "")
-                print("Going to ban", user_to_ban)
-                user_ban = s.query(User).filter(User.username==user_to_ban).first()            
-                if len(user_to_ban) >= 3 and user_ban is not None:
-                    self.ban_user_from_id(bot, user_ban.id, reason="Banned by admin " + update.message.from_user.username)
-                    delete_message_by_type(bot, "banned-from-command", CHAT_IDS)
-                    self.delete_messages_from_id(bot, user_ban.id)
-                    if silent == False:
-                        tlg_send_message(bot, CHAT_IDS, '⛔️ User ' + '<a href="tg://user?id=' + str(user_ban.id) + '">' + user_ban.first_name + '</a>' + ' has been banned', "banned-from-command")
-                    print(user_to_ban, "banned!!!")
-                else:
-                    print("User not found")
-                    s.close()
-                    return
-            else:
-                # Banear con nombre o id
-                nombre = ""
-                if len(combinacion) > 2:
-                    nombre = update.message.text.replace(command, "")
-                else:
-                    nombre = combinacion[1]
-                user_to_ban = nombre
-                print("Going to ban", user_to_ban)
-                user_ban = s.query(User).filter(User.first_name==user_to_ban).first()     
-                user_ban_id = s.query(User).filter(User.id==user_to_ban).first()              
-                if len(user_to_ban) >= 3 and (user_ban is not None or user_ban_id is not None):
-                    if user_ban is not None:
-                        self.ban_user_from_id(bot, user_ban.id, reason="Banned by admin " + update.message.from_user.username)
-                        self.delete_messages_from_id(bot, user_ban.id)
-                        if silent == False:
-                            tlg_send_message(bot, CHAT_IDS, '⛔️ User ' + '<a href="tg://user?id=' + str(user_ban.id) + '">' + user_ban.first_name + '</a>' + ' has been banned', "banned-from-command")
-                    if user_ban_id is not None:    
-                        self.ban_user_from_id(bot, user_ban_id.id, reason="Banned by admin " + update.message.from_user.username)
-                        self.delete_messages_from_id(bot, user_ban_id.id)
-                        if silent == False:
-                            tlg_send_message(bot, CHAT_IDS, '⛔️ User ' + '<a href="tg://user?id=' + str(user_ban.id) + '">' + user_ban.first_name + '</a>' + ' has been banned', "banned-from-command")
-                    delete_message_by_type(bot, "banned-from-command", CHAT_IDS)                                     
-                    print(user_to_ban, "banned!!!")
-                else:
-                    print("User not found")
-                    s.close()
-                    return
         s.close()
     
     def unban_command(self, bot, update, chat_id, command):
         # Es admin, continúo
-        combinacion = update.message.text.split(' ')
+        text = update.message.text.replace(command, '')
         s = session()
-        if update.message.reply_to_message is not None:
-            # Desbanear con mención
-            print("Going to unban", user_to_unban)        
-            user_unban = s.query(User).filter(User.id==update.message.reply_to_message.from_user.id).first()              
-            if len(user_to_unban) > 3 and user_unban is not None:
-                bot.unban_chat_member(chat_id, user_unban.id)
-                s.query(UserBan).filter(UserBan.user_id==user_unban.id).delete()
+        user_id = self.get_user_id(text, update, s)
+        print("Going to unban user_id", user_id)
+        if user_id == '' or user_id is None:
+            print("FAILED TO UNBAN USER: NOT FOUND")
+        else:
+            bot.unban_chat_member(chat_id, user_id)
+            s.query(UserBan).filter(UserBan.user_id==user_id).delete()
+            user_unban = s.query(User).filter(User.id==user_id).first()     
+            if user_unban is None:
+                print("FAILED TO UNBAN USER: NOT FOUND")
+            else:
                 user_unban.verified = 1
                 s.merge(user_unban)
                 s.commit()
-                print(user_to_unban, "unbanned!!!")
-        elif len(combinacion) == 2 and combinacion[1].isdecimal():
-            bot.unban_chat_member(chat_id, int(combinacion[1]))
-        elif len(combinacion) > 1:
-            # Desbanear con alias o nombre
-            if '@' in combinacion[1]:
-                # Desbanear con alias
-                user_to_unban = combinacion[1].replace("@", "").replace(" ", "")
-                print("Going to unban", user_to_unban)
-                user_unban = s.query(User).filter(User.username==user_to_unban).first()              
-                if len(user_to_unban) >= 3 and user_unban is not None:
-                    bot.unban_chat_member(chat_id, user_unban.id)
-                    s.query(UserBan).filter(UserBan.user_id==user_unban.id).delete()
-                    user_unban.verified = 1
-                    s.merge(user_unban)
-                    s.commit()
-                    print(user_to_unban, "unbanned!!!")               
-                else:
-                    print("User not found")
-                    s.close()
-                    return
-            else:
-                # Desbanear con nombre
-                nombre = ""
-                if len(combinacion) > 2:
-                    nombre = update.message.text.replace(command, "")
-                else:
-                    nombre = combinacion[1]
-                user_to_unban = nombre
-                print("Going to ban", user_to_unban)
-                user_unban = s.query(User).filter(User.first_name==user_to_unban).first()            
-                if len(user_to_unban) >= 3 and user_unban is not None:
-                    bot.unban_chat_member(chat_id, user_unban.id)
-                    s.query(UserBan).filter(UserBan.user_id==user_unban.id).delete()
-                    user_unban.verified = 1
-                    s.merge(user_unban)
-                    s.commit()
-                    print(user_to_unban, "unbanned!!!")
-                else:
-                    print("User not found")
-                    s.close()
-                    return
+                print("USER UNBANNED!!!")
         s.close()
-                
+        
+    def level_up(self, bot, update, chat_id, command):
+        s = session()
+        text = update.message.text.replace(command, '')
+        user_id = self.get_user_id(text, update, s)
+        print("Going to levelup user_id", user_id)
+        if user_id == '':
+            print("FAILED TO LEVELUP USER: NOT FOUND")
+        else:
+            user = s.query(User).filter(User.id==user_id).first()
+            if user is None:
+                print("FAILED TO LEVELUP USER: NOT FOUND")
+            else:                    
+                user.popularity = user.popularity+1
+                s.merge(user)
+                s.commit()     
+                print("USER LEVELED UP!!!")
+        s.close()          
+        
+    def get_user_id(self, text, update, s):
+        # Get user id
+        try:
+            entities_list = [MessageEntity.TEXT_MENTION]
+            if update.message.reply_to_message is not None:
+                # Take id from reply
+                return update.message.reply_to_message.from_user.id
+            entities = update.message.parse_entities(entities_list)
+            if len(entities) > 0:
+                # Take id from text mention
+                for entity in entities:
+                    return entity.user.id
+            if text[0] == "@":
+                # Take id from @ mention
+                username = text.replace("@", "")
+                user_unban = s.query(User).filter(User.username==username).first()  
+                if user_unban is not None:
+                    return user_unban.id
+                else:
+                    user_unban = s.query(User).filter(func.concat(User.first_name, ' ', User.last_name).like(text)).first()  
+                    if user_unban is not None:
+                        return user_unban.id
+                    else:
+                        return ''       
+            if text.isdecimal():
+                # Take id from text
+                return text
+        except Exception as e:
+            print(e)
+            return ''
+            
     def delete_messages_from_id(self, bot, user_id):
         s = session()
         mensajes = s.query(Message).filter(Message.user_id==user_id)
