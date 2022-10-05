@@ -1334,7 +1334,7 @@ class TelegramMonitorBot:
         user_id = self.get_user_id(text, update, s)
         print("Going to ban user_id", user_id)
         if user_id == '' or user_id is None:
-            print("FAILED TO UNBAN USER: NOT FOUND")
+            print("FAILED TO BAN USER: NOT FOUND")
         else:
             delete_message_by_type(bot, "banned-from-command", chat_id)
             reason = "Banned by admin " + update.message.from_user.username
@@ -1351,7 +1351,7 @@ class TelegramMonitorBot:
         user_id = self.get_user_id(text, update, s)
         print("Going to ban user_id", user_id)
         if user_id == '' or user_id is None:
-            print("FAILED TO UNBAN USER: NOT FOUND")
+            print("FAILED TO BAN USER: NOT FOUND")
         else:
             delete_message_by_type(bot, "banned-from-command", chat_id)
             reason = "Banned by admin " + update.message.from_user.username
