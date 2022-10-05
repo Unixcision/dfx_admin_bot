@@ -650,7 +650,9 @@ class TelegramMonitorBot:
                         [InlineKeyboardButton(text='Check out our Linktree', url='https://linktr.ee/dfxfinance')]
                 ])
                 tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup)
+            verified = 0
             if captcha_config == 'true':
+                verified = 0
                 messageCaptcha = "Before you can post to the group you must complete a CAPTCHA, do this and all your questions will be answered."
                 reply_markup_captcha = InlineKeyboardMarkup([
                         [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
@@ -659,6 +661,7 @@ class TelegramMonitorBot:
                 msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha)
                 captcha_msg = msg['msg'].message_id
             else:
+                verified = 1
                 captcha_msg = 0
             
             user = update.chat_member.new_chat_member.user
@@ -668,7 +671,7 @@ class TelegramMonitorBot:
                     user.first_name,
                     user.last_name,
                     user.username,
-                    1,captcha_msg)
+                    verified,captcha_msg)
                 if add_user_success:
                     print("User added: {}".format(user.id))
                 else:
