@@ -697,7 +697,7 @@ class TelegramMonitorBot:
                     can_invite_users=False,
                     can_pin_messages=False,
                 )
-                context.bot.restrict_chat_member(update.effective_chat.id, user.id, permissions)          
+                bot.restrict_chat_member(update.effective_chat.id, user.id, permissions)          
 
         
     def security_check_username(self, bot, update):
