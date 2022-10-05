@@ -1325,8 +1325,11 @@ class TelegramMonitorBot:
             tlg_reply_message(message, "https://medium.com/@dfxfinance/", "medium")
         if command == "/delmsg":
             if is_admin and self.admin_exempt:
-                bot.delete_message(chat_id=chat_id,
-                   message_id=update.message.reply_to_message.message_id)
+                message_text = update.message.text.replace(command + ' ', '')
+                if update.message.reply_to_message is not None:
+                    bot.delete_message(chat_id=chat_id, message_id=update.message.reply_to_message.message_id)
+                elif message_text.isdecimal():
+                    bot.delete_message(chat_id=chat_id, message_id=message_text)
         s.close()
         
     def ban_command(self, bot, update, chat_id, silent, command):
