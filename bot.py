@@ -393,7 +393,7 @@ def twitter_reader(bot):
             print("Reading Tweet", tweet.url)
             if len(s.query(Tweets).filter_by(url=tweet.url).all()) >= 1:
                 continue
-            message = '🔥 <b>DFX Team just Tweeted</b>\n' + tweet.content + '\n\n<b>Posted on:</b> ' + str(tweet.date) +  '\n<b>Tweet link:</b> ' + tweet.url
+            message = '🔥 <b>DFX Team just Tweeted</b>\n' + tweet.rawContent + '\n\n<b>Posted on:</b> ' + str(tweet.date) +  '\n<b>Tweet link:</b> ' + tweet.url
             tlg_send_message(bot, CHAT_IDS, message, None, parse_mode=ParseMode.HTML)            
             tweet_url = Tweets(
                 url=tweet.url
@@ -401,10 +401,10 @@ def twitter_reader(bot):
             s.add(tweet_url)
             s.commit()
             contenido = ""
-            if tweet.content.startswith("RT"):
-                contenido = tweet.content.replace("RT", "♻️ Retweeted\n")
+            if tweet.rawContent.startswith("RT"):
+                contenido = tweet.rawContent.replace("RT", "♻️ Retweeted\n")
             else:
-                contenido = tweet.content
+                contenido = tweet.rawContent
             messageDfxNews = "<b>🔥 New Tweet by DFX Team</b>\n" + contenido + "\n\n<b>Posted on:</b> " + str(tweet.date) + "\n<b>Tweet link:</b> " + tweet.url
             url = TWITTER_URL
             myobj = {'chat_id': TWITTER_CHAT_ID, 'text': messageDfxNews, 'parse_mode': 'HTML', 'disable_web_page_preview': 'True'}
