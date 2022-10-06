@@ -342,7 +342,7 @@ def daily_description(bot):
         if now.hour == hour_to_send and now.minute == 0:
             text_to_send = "👋🏻 Hello everyone!\nI am DFX Bot and I am here to serve you. Let me explain what I can do for you.\n\n🤖 You can use these commands in this chat and they will do the described:\n/dragon → Post a random dragon image\n/kevin → Post a Kevin's image\n/adrian → Post an Adrian's image\n/gm → Post a Good Morning image\n/coty → Post a Coty's image\n/jim → Post a Jim's image\n/hopium → Post an hopium image\n/price → Displays the price\n/whalechart → Post the whale chart\n/maticrpc → Post the matic rpc configuration\n/vote → Post the vote tutorial\n/supply → Displays the current supply\n/top10level → Displays the top 10 users by their level\n/mylevel → Shows your level to the world\n\n🦸‍♂️ I am also a <b>moderator</b>, I do not allow you to send links or media files until you reach level 1 through your contributions to the group.\n\nAnd how do I level up? It's easy, just receive \"+1\" in reply to your messages and <b>write content that adds value</b> to the conversation.\n\n✍️ Reply with +1 to the messages that <b>you consider valuable</b> to contribute to this system.\n\n🔔 <b>Start a converation with me privately</b> if you want to get updated when someone adds reputation to you.\n\n❤️ Have a lovely day and thank you for supporting DFX! ❤️"
             delete_message_by_type(bot, "daily-explain", CHAT_IDS)
-            tlg_send_message(bot, CHAT_IDS, text_to_send, "daily-explain")
+            tlg_send_message(bot, CHAT_IDS, text_to_send, "daily-explain", parse_mode=ParseMode.HTML)
         
 def user_increment(bot):
     while True:
@@ -360,7 +360,7 @@ def user_increment(bot):
             s.merge(misc_data)
             s.commit()
             delete_message_by_type(bot, "increase", CHAT_IDS)
-            tlg_send_message(bot, CHAT_IDS, text, "increase")       
+            tlg_send_message(bot, CHAT_IDS, text, "increase", parse_mode=ParseMode.HTML)     
         s.close()
 
 def clean_messages(bot):
@@ -394,7 +394,7 @@ def twitter_reader(bot):
             if len(s.query(Tweets).filter_by(url=tweet.url).all()) >= 1:
                 continue
             message = '🔥 <b>DFX Team just Tweeted</b>\n' + tweet.content + '\n\n<b>Posted on:</b> ' + str(tweet.date) +  '\n<b>Tweet link:</b> ' + tweet.url
-            tlg_send_message(bot, CHAT_IDS, message, None)            
+            tlg_send_message(bot, CHAT_IDS, message, None, parse_mode=ParseMode.HTML)            
             tweet_url = Tweets(
                 url=tweet.url
                 )
@@ -413,14 +413,14 @@ def twitter_reader(bot):
         s.close()
         sleep(120)		
 
-def tlg_send_message(bot, chat_id, message, type, reply_markup=None, reply_to_message_id=None):
+def tlg_send_message(bot, chat_id, message, type, reply_markup=None, reply_to_message_id=None, parse_mode=None):
     '''Bot try to send a message'''
     print("tlg_send_message")        
     sent_result = dict()
     sent_result["msg"] = None
     sent_result["error"] = ""
     try:
-        sent_result["msg"] = bot.send_message(chat_id, message, reply_to_message_id=reply_to_message_id, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+        sent_result["msg"] = bot.send_message(chat_id, message, reply_to_message_id=reply_to_message_id, reply_markup=reply_markup, parse_mode=parse_mode)
     except TelegramError as e:
         sent_result["error"] = str(e)
         print("[{}] {}".format(chat_id, sent_result["error"]))
@@ -532,7 +532,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary", "education"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -648,7 +648,7 @@ class TelegramMonitorBot:
                 reply_markup = InlineKeyboardMarkup([
                         [InlineKeyboardButton(text='Check out our Linktree', url='https://linktr.ee/dfxfinance')]
                 ])
-                tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup)
+                tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup, parse_mode=ParseMode.HTML)
             verified = 0
             if captcha_config == 'true':
                 verified = 0
@@ -657,7 +657,7 @@ class TelegramMonitorBot:
                         [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
                 ])
                 delete_message_by_type(context.bot, "captcha", update.effective_chat.id)
-                msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha)
+                msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha, parse_mode=ParseMode.HTML)
                 captcha_msg = msg['msg'].message_id
             else:
                 verified = 1
@@ -725,7 +725,7 @@ class TelegramMonitorBot:
                 mention_html = update.message.from_user.mention_html()
                 log_message = "❌ Message deleted. " + mention_html + " you are not authorized to post audios, documents, links, games or voice messages. You need to level up by joining in the conversation more."
                 delete_message_by_type(bot, "not-authorized", CHAT_IDS)
-                tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized")
+                tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized", parse_mode=ParseMode.HTML)
                 print(log_message)
                 # Delete the message
                 update.message.delete()
@@ -738,7 +738,7 @@ class TelegramMonitorBot:
             s.close()
 
     def banCaptcha(self, bot, message, usuario, from_user):
-        tlg_send_message(bot, message.chat_id, "You have been banned for failing 50 attempts. If you think it is an error write to @danicryptonews", type=None)
+        tlg_send_message(bot, message.chat_id, "You have been banned for failing 50 attempts. If you think it is an error write to @danicryptonews", type=None, parse_mode=ParseMode.HTML)
         s = session()
         checkban = s.query(UserBan).filter_by(UserBan.user_id==usuario.id).all()
         if checkban is not None:
@@ -809,8 +809,8 @@ class TelegramMonitorBot:
                     if message.chat.type == "private":
                         # gets the initial value
                         if usuario is None:
-                            tlg_send_message(bot, message.chat_id, "You are not a @DFX_Finance user. In order to interact with me you must join the group.", type=None)
-                        elif usuario.username == "CotyKuhn" or usuario.username == "Negitaro" or usuario.username == "danicryptonews" or usuario.username == "naisechef" and message.text == "/bannedlist":
+                            tlg_send_message(bot, message.chat_id, "You are not a @DFX_Finance user. In order to interact with me you must join the group.", type=None, parse_mode=ParseMode.HTML)
+                        elif (usuario.username == "CotyKuhn" or usuario.username == "Negitaro" or usuario.username == "danicryptonews" or usuario.username == "naisechef") and message.text == "/bannedlist":
                             banned_list = s.query(UserBan).all()
                             try:
                                 os.remove('ban_list_export.xlsx')
@@ -824,6 +824,7 @@ class TelegramMonitorBot:
                             worksheet.write('D1', 'Ban reason')
                             worksheet.write('E1', 'Date banned')
                             n = 2
+                            print(message.text_html)
                             for banned in banned_list:
                                 i = str(n)
                                 username = s.query(User).filter(User.id==banned.user_id).first()
@@ -839,6 +840,8 @@ class TelegramMonitorBot:
                             workbook.close()
                             report = 'ban_list_export.xlsx'
                             tlg_send_file(bot, message.chat_id, open(report, 'rb'), type=None)
+                        elif "/text2html" in message.text:
+                            tlg_send_message(bot, message.chat_id, message.text_html.replace("\n", "\\n"), type=None, parse_mode=None)
                         elif usuario is not None and usuario.verified == 0:
                             captchaModel = s.query(Captcha).filter_by(user_id=from_user).first()
                             if captchaModel is not None and captchaModel.attemps <= 0:
@@ -858,7 +861,7 @@ class TelegramMonitorBot:
                                     can_pin_messages=True,
                                 )
                                 context.bot.restrict_chat_member(CHAT_IDS, from_user, permissions) 
-                                tlg_send_message(bot, message.chat_id, "✅ CAPTCHA solved, welcome to the DFX Finance community! Take a look at the pinned posts or visit docs.dfx.finance for more info.", type=None)
+                                tlg_send_message(bot, message.chat_id, "✅ CAPTCHA solved, welcome to the DFX Finance community! Take a look at the pinned posts or visit docs.dfx.finance for more info.", type=None, parse_mode=ParseMode.HTML)
                                 print("USER", usuario.first_name, usuario.username, "PASSED THE CAPTCHA")
                                 try:
                                     bot.deleteMessage(message_id = usuario.captcha_message, chat_id = CHAT_IDS)
@@ -890,7 +893,7 @@ class TelegramMonitorBot:
                                 if intentos == 0:
                                     self.banCaptcha(bot, message, usuario, from_user)
                                     return
-                                tlg_send_message(bot, message.chat_id, "Regenerating CAPTCHA, give it another try", type=None)
+                                tlg_send_message(bot, message.chat_id, "Regenerating CAPTCHA, give it another try", type=None, parse_mode=ParseMode.HTML)
                                 img_caption = "Please write the 4 numbers you see in the image to verify that you are a human."
                                 tlg_send_image(bot, message.chat_id, open(captcha["image"],"rb"), None, img_caption)
                             elif captchaModel is not None and captchaModel.solution != message.text.upper().replace(" ", ""):
@@ -902,9 +905,9 @@ class TelegramMonitorBot:
                                 if intentos == 0:
                                     self.banCaptcha(bot, message, usuario, from_user)
                                     return
-                                tlg_send_message(bot, message.chat_id, "❌ Sorry incorrect, give it another go", type=None )                      
+                                tlg_send_message(bot, message.chat_id, "❌ Sorry incorrect, give it another go", type=None, parse_mode=ParseMode.HTML)                  
                         elif usuario.verified == 1:
-                            tlg_send_message(bot, message.chat_id, "You have already completed the CAPTCHA, nothing more to see here", type=None)                       
+                            tlg_send_message(bot, message.chat_id, "You have already completed the CAPTCHA, nothing more to see here", type=None, parse_mode=ParseMode.HTML)                     
                         elif usuario is None:
                             print("3 Message from user {} is from chat_id not being monitored: {}".format(
                                 from_user,
@@ -986,14 +989,14 @@ class TelegramMonitorBot:
                     s.commit()
                     votes = s.query(UserReputation).filter(UserReputation.message_id==message.reply_to_message.message_id).count()
                     delete_message_by_type(bot, "increase-reputation", CHAT_IDS)
-                    tlg_send_message(bot, CHAT_IDS, "🙌🏻 " + message.from_user.mention_html() + " increased the reputation of " + message.reply_to_message.from_user.mention_html(), type="increase-reputation")
+                    tlg_send_message(bot, CHAT_IDS, "🙌🏻 " + message.from_user.mention_html() + " increased the reputation of " + message.reply_to_message.from_user.mention_html(), type="increase-reputation", parse_mode=ParseMode.HTML)
                     if votes == 5:
-                        tlg_send_message(bot, message.chat_id, "⭐️ Congratulations! Your post reached 5 upvotes, keep rocking!", "", reply_to_message_id=message.reply_to_message.message_id)
+                        tlg_send_message(bot, message.chat_id, "⭐️ Congratulations! Your post reached 5 upvotes, keep rocking!", "", reply_to_message_id=message.reply_to_message.message_id, parse_mode=ParseMode.HTML)
                     username = None
                     if message.from_user.username is not None:
                         username = "@" + message.from_user.username
                     try:
-                        tlg_send_message(bot, message.reply_to_message.from_user.id, "⭐️ You have been upvoted by " + str(message.from_user.first_name or '') + " " + str(message.from_user.last_name or '') + " " + str(username or '') + "\n\n✉️ Message link: https://t.me/DFX_Finance/" + str(message.reply_to_message.message_id), type=None)
+                        tlg_send_message(bot, message.reply_to_message.from_user.id, "⭐️ You have been upvoted by " + str(message.from_user.first_name or '') + " " + str(message.from_user.last_name or '') + " " + str(username or '') + "\n\n✉️ Message link: https://t.me/DFX_Finance/" + str(message.reply_to_message.message_id), type=None, parse_mode=ParseMode.HTML)
                     except TelegramError:
                         print("User disabled voting notifications")
                     print("New vote from", message.from_user.first_name, message.from_user.last_name, "to", userAddRep.first_name, userAddRep.last_name)
@@ -1049,7 +1052,7 @@ class TelegramMonitorBot:
 	                mention_html = update.message.from_user.mention_html()
 	                log_message = "❌ Message deleted. " + mention_html + " you are not authorized to post audios, documents, links, games or voice messages. Level up to remove these restrictions."
 	                delete_message_by_type(bot, "not-authorized", CHAT_IDS)
-	                tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized")
+	                tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized", parse_mode=ParseMode.HTML)
 	                update.message.delete()
 	                messageHide = MessageHide(
 	                    user_id=update.message.from_user.id,
@@ -1157,7 +1160,7 @@ class TelegramMonitorBot:
             if entity.user is not None:
                 user_interact_with = entity.user        
         if message.chat.type == "private":
-            tlg_send_message(bot, update.effective_message.chat.id, "This command can only be used on the group", type=None)
+            tlg_send_message(bot, update.effective_message.chat.id, "This command can only be used on the group", type=None, parse_mode=ParseMode.HTML)
             return
         is_admin = False
         if message:
@@ -1176,7 +1179,7 @@ class TelegramMonitorBot:
         print("command: {} seen in chat_id {}".format(command, chat_id))
         if BOT_ALIAS in command:
             command = command.replace("@" + BOT_ALIAS, "")
-        if command != None and command not in ["/contract", "/website", "/twitter", "/medium", "/summary"]:
+        if command != None and command not in ["/contract", "/website", "/twitter", "/medium", "/summary", "/education"]:
             bot.deleteMessage(message_id = update.message.message_id, chat_id = chat_id)
         if command == "/dragon":
             n = random.randint(1,59)
@@ -1213,7 +1216,7 @@ class TelegramMonitorBot:
             self.price(bot, chat_id)
         if command == "/whalechart":
             delete_message_by_type(bot, "whalechart", chat_id)
-            tlg_send_message(bot, chat_id, "500 DFX - Shrimp 🦐 \n500 - 2000 DFX - Crab 🦀 \n2K - 10K DFX - Tropical Fish 🐠 \n10K - 20K DFX - Octopus 🐙 \n20K - 30K DFX - Dolphin 🐬 \n30K - 50K DFX - Shark 🦈 \n50K - 75K DFX - Baby Whale 🐳 \n75K - 100K DFX - Whale 🐋 \n100K - 200K DFX - Dragon 🐉 \n200K++ DFX - Mythical Dragon 🐲", "whalechart")
+            tlg_send_message(bot, chat_id, "500 DFX - Shrimp 🦐 \n500 - 2000 DFX - Crab 🦀 \n2K - 10K DFX - Tropical Fish 🐠 \n10K - 20K DFX - Octopus 🐙 \n20K - 30K DFX - Dolphin 🐬 \n30K - 50K DFX - Shark 🦈 \n50K - 75K DFX - Baby Whale 🐳 \n75K - 100K DFX - Whale 🐋 \n100K - 200K DFX - Dragon 🐉 \n200K++ DFX - Mythical Dragon 🐲", "whalechart", parse_mode=ParseMode.HTML)
         if command == "/unban":
             if is_admin and self.admin_exempt:
                 self.unban_command(bot, update, chat_id, (command + " "))
@@ -1226,7 +1229,7 @@ class TelegramMonitorBot:
                 self.ban_command(bot, update, chat_id, silent, (command + " "))
         if command == "/mylevel":
             user = s.query(User).filter(User.id==message.from_user.id).first()           
-            tlg_send_message(bot, chat_id, "👑 Hey " + message.from_user.mention_html() + ", you are <b>level " + str(user.popularity) + "</b> 👑", "user-level")
+            tlg_send_message(bot, chat_id, "👑 Hey " + message.from_user.mention_html() + ", you are <b>level " + str(user.popularity) + "</b> 👑", "user-level", parse_mode=ParseMode.HTML)
         if command == "/top10level":
             delete_message_by_type(bot, "rank", chat_id)
             admins = bot.get_chat_administrators(CHAT_IDS, timeout=20)
@@ -1249,7 +1252,7 @@ class TelegramMonitorBot:
                     textTop10 = textTop10 + arrayNumberEmojis.split("_")[i-4] + " <b>" + str(userRank.first_name or '') + " " + str(userRank.last_name or '') + "</b> → Level " + str(userRank.popularity or '') + "\n"
                 i = i + 1
             textTop10 = textTop10 + "\n<i>📝 Level up by being active on the group</i>"
-            tlg_send_message(bot, chat_id, textTop10, "rank")
+            tlg_send_message(bot, chat_id, textTop10, "rank", parse_mode=ParseMode.HTML)
         if command == "/supply":
             request = requests.get('https://circ-supply.dfx.finance/api?' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)))
             if request.status_code == 200:
@@ -1257,7 +1260,7 @@ class TelegramMonitorBot:
                 supplyStr = request.text
                 supply = "{:,.2f}".format(round(float(supplyStr), 2))
                 supplyTelegramText = "<b>📊 DFX current circulating supply:</b>\n" + str(supply) + " DFX\n\nThanks for asking! 😊"
-                tlg_send_message(bot, chat_id, supplyTelegramText, "supply")
+                tlg_send_message(bot, chat_id, supplyTelegramText, "supply", parse_mode=ParseMode.HTML)
         if command == "/hardban":
             if is_admin and self.admin_exempt:
                 silent = False
@@ -1272,7 +1275,7 @@ class TelegramMonitorBot:
                 result = con.execute("SELECT array_to_string(array_agg(CONCAT('<a href=''tg://user?id=', id)),'''>&#8288;</a>') AS result FROM telegram_users;")
                 mencion_todos = str(result.fetchone()).replace("(", "").replace("\"", "").replace(",", "").replace(")", "") + "'>\&#8288;/a>🛎 Hello everyone!"
                 print(mencion_todos)
-                tlg_send_message(bot, chat_id, mencion_todos, "banned-from-command")             
+                tlg_send_message(bot, chat_id, mencion_todos, "banned-from-command", parse_mode=ParseMode.HTML)           
         if command == "/hardbansilent":
             if is_admin and self.admin_exempt:
                 silent = True
@@ -1323,8 +1326,12 @@ class TelegramMonitorBot:
         if command == "/medium":
             delete_message_by_type(bot, "medium", chat_id)
             tlg_reply_message(message, "https://medium.com/@dfxfinance/", "medium")
-        if command == "/summary":
-            summary_text = "<b>*** DFX Summary ***</b>\nspecialises in non-usd 100% fiat backed stablecoins foreign exchange:\nCADC 🇨🇦 , EUROC & EURS🇪🇺, XSGD 🇸🇬, GYEN 🇯🇵, NZDS 🇳🇿, XIDR 🇮🇩, TRYB 🇹🇷 all paired with  USDC 🇺🇸\n\nallowing users of the platform to swap one stablecoin for another at the cost of 0.05% fee (a regular bank charges 2% upwards to swap currencies, so DFX is 40x cheaper than a bank)\n\n<b>How does this work?:</b>\n- liquidity providers provide liquidity to the stablcoin pools by staking a pair of stablecoin tokens on \nhttps://app.dfx.finance/pools\n- users of the platform exchange one stablecoin for another and as part of the transaction a 0.05% swap fee is taken\n- the liquidity providers then receive the fee's from the pool they provided liquidity to as rewards in the form of DFX tokens with an APR return of 8% - 46% depending on the pool\n- DFX tokens can then be locked into veDFX to give a boost in the APR received from their liquidity pool investment up to 2.5x\n- DFX tokens can also be used to vote on proposals within the DAO giving the community the ability to steer the direction of the protocol.\n\n<b>Upcoming Features</b>\n- veDFX: lock up your DFX for voting power on Liquidity Pool rewards allocation and a APR boost up to 2.5x\n- DFX2.0: any token can propose to list on DFX (including commodities such as Gold, Oil etc.) if they hold enough veDFX and pass the DFX snapshot DAO vote\n- Bribes: those holding DFX can be bribed to vote on snapshot proposal via hiddenhand\n- Lending/Borrowing: extending the Loan/Borrow ability on Euler from currently just CADC to all stablecoins on the platform\n\n<b>Partnerships</b>\n- Circle: close partner and also provider of the USDC and EUROC stablecoins\n- Insure DAO: to insure the liquidity pools if hacked\n- Bluejay Finance: specialises in non-usd stablecoin on/off ramps to fiat\n- Chainlink: provide the oracle to ensure super efficient prices match to real world exchange rates\n\n<b>Where to get DFX?</b>\nCEXes: Huobi, MEXC, CoinDCX and BitKan\nDEXes: 1inch, Balancer, Sushiswap dexes, TELcoin app\n\n<b>More Info</b>\ndocs.dfx.finance"
+        if command == "/education":
+            education_text = "*** <b>DFX Education Zone</b> ***\n\nHere are some posts to educate yourself on DFX, the DAO and some features of the platform\n\n<b>DFX Summary:</b> https://t.me/DFX_Finance/54550\n\n<b>Proposals &amp; DAO Voting Process:</b> https://t.me/DFX_Finance/56321\n\n<b>veDFX rewards boost explained:</b> https://t.me/DFX_Finance/54903\n<b>veDFX voting explained:</b> https://t.me/DFX_Finance/54692\n\n<b>How to maximise earnings:</b> https://t.me/DFX_Finance/47143\n\n<b>DFX v2.0:</b> https://t.me/DFX_Finance/43205"
+            delete_message_by_type(bot, "education", chat_id)
+            tlg_reply_message(message, education_text, "education")
+        if commandd == "/summary":
+            summary_text = "<b>*** DFX Summary ***</b>\nForex (FX) Decentralized Exchange specializing in Non-USD Stablecoins that are backed 1:1 with their fiat equivalent. Current Non-USD Stablecoin offerings include:\nCADC 🇨🇦 , EUROC & EURS🇪🇺, XSGD 🇸🇬, GYEN 🇯🇵, NZDS 🇳🇿, XIDR 🇮🇩, TRYB 🇹🇷 all paired with  USDC 🇺🇸\n\nallowing users of the platform to swap one stablecoin for another at the cost of 0.05% fee (a regular bank charges 2% upwards to swap currencies, so DFX is 40x cheaper than a bank)\n\n<b>How does this work?:</b>\n- liquidity providers provide liquidity to the stablcoin pools by staking a pair of stablecoin tokens on \nhttps://app.dfx.finance/pools\n- users of the platform exchange one stablecoin for another and as part of the transaction a 0.05% swap fee is taken\n- the liquidity providers then receive the fee's from the pool they provided liquidity to as rewards in the form of DFX tokens with an APR return of 8% - 46% depending on the pool\n- DFX tokens can then be locked into veDFX to give a boost in the APR received from their liquidity pool investment up to 2.5x\n- DFX tokens can also be used to vote on proposals within the DAO giving the community the ability to steer the direction of the protocol.\n\n<b>Upcoming Features</b>\n- veDFX: lock up your DFX for voting power on Liquidity Pool rewards allocation and a APR boost up to 2.5x\n- DFX2.0: any token can propose to list on DFX (including commodities such as Gold, Oil etc.) if they hold enough veDFX and pass the DFX snapshot DAO vote\n- Bribes: those holding DFX can be bribed to vote on snapshot proposal via hiddenhand\n- Lending/Borrowing: extending the Loan/Borrow ability on Euler from currently just CADC to all stablecoins on the platform\n\n<b>Partnerships</b>\n- Circle: close partner and also provider of the USDC and EUROC stablecoins\n- Insure DAO: to insure the liquidity pools if hacked\n- Bluejay Finance: specialises in non-usd stablecoin on/off ramps to fiat\n- Chainlink: provide the oracle to ensure super efficient prices match to real world exchange rates\n\n<b>Where to get DFX?</b>\nCEXes: Huobi, MEXC, CoinDCX and BitKan\nDEXes: 1inch, Balancer, Sushiswap dexes, TELcoin app\n\n<b>More Info</b>\ndocs.dfx.finance"
             delete_message_by_type(bot, "summary", chat_id)
             tlg_reply_message(message, summary_text, "summary")
         if command == "/delmsg":
@@ -1353,7 +1360,7 @@ class TelegramMonitorBot:
             self.ban_user_from_id(bot, user_id, reason=reason)
             delete_message_by_type(bot, "banned-from-command", CHAT_IDS)
             if silent == False:
-                tlg_send_message(bot, CHAT_IDS, "⛔️ User " + update.message.reply_to_message.from_user.mention_html() + " has been banned", "banned-from-command")
+                tlg_send_message(bot, CHAT_IDS, "⛔️ User " + update.message.reply_to_message.from_user.mention_html() + " has been banned", "banned-from-command", parse_mode=ParseMode.HTML)
         s.close()
                 
     def hard_ban_command(self, bot, update, chat_id, silent, command):
@@ -1371,7 +1378,7 @@ class TelegramMonitorBot:
             delete_message_by_type(bot, "banned-from-command", CHAT_IDS)
             self.delete_messages_from_id(bot, user_id)
             if silent == False:
-                tlg_send_message(bot, CHAT_IDS, "⛔️ User " + update.message.reply_to_message.from_user.mention_html() + " has been banned", "banned-from-command")
+                tlg_send_message(bot, CHAT_IDS, "⛔️ User " + update.message.reply_to_message.from_user.mention_html() + " has been banned", "banned-from-command", parse_mode=ParseMode.HTML)
         s.close()
     
     def unban_command(self, bot, update, chat_id, command):
@@ -1492,7 +1499,7 @@ class TelegramMonitorBot:
         print("Clicked")
             
     def price(self, bot, chat_id):      
-        msg = tlg_send_message(bot, chat_id, "⏳ <i>Fetching data...</i>", "price")              
+        msg = tlg_send_message(bot, chat_id, "⏳ <i>Fetching data...</i>", "price", parse_mode=ParseMode.HTML)            
         reply_markup_price = InlineKeyboardMarkup([
                 [InlineKeyboardButton(text='🔄 Refresh data', callback_data="refresh")]
         ])
