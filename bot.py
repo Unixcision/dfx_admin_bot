@@ -532,7 +532,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -1176,7 +1176,7 @@ class TelegramMonitorBot:
         print("command: {} seen in chat_id {}".format(command, chat_id))
         if BOT_ALIAS in command:
             command = command.replace("@" + BOT_ALIAS, "")
-        if command != None and command not in ["/contract", "/website", "/twitter", "/medium"]:
+        if command != None and command not in ["/contract", "/website", "/twitter", "/medium", "/summary"]:
             bot.deleteMessage(message_id = update.message.message_id, chat_id = chat_id)
         if command == "/dragon":
             n = random.randint(1,59)
@@ -1323,6 +1323,10 @@ class TelegramMonitorBot:
         if command == "/medium":
             delete_message_by_type(bot, "medium", chat_id)
             tlg_reply_message(message, "https://medium.com/@dfxfinance/", "medium")
+        if command == "/summary":
+            summary_text = "<b>*** DFX Summary ***</b>\nspecialises in non-usd 100% fiat backed stablecoins foreign exchange:\nCADC 🇨🇦 , EUROC & EURS🇪🇺, XSGD 🇸🇬, GYEN 🇯🇵, NZDS 🇳🇿, XIDR 🇮🇩, TRYB 🇹🇷 all paired with  USDC 🇺🇸\n\nallowing users of the platform to swap one stablecoin for another at the cost of 0.05% fee (a regular bank charges 2% upwards to swap currencies, so DFX is 40x cheaper than a bank)\n\n<b>How does this work?:</b>\n- liquidity providers provide liquidity to the stablcoin pools by staking a pair of stablecoin tokens on \nhttps://app.dfx.finance/pools\n- users of the platform exchange one stablecoin for another and as part of the transaction a 0.05% swap fee is taken\n- the liquidity providers then receive the fee's from the pool they provided liquidity to as rewards in the form of DFX tokens with an APR return of 8% - 46% depending on the pool\n- DFX tokens can then be locked into veDFX to give a boost in the APR received from their liquidity pool investment up to 2.5x\n- DFX tokens can also be used to vote on proposals within the DAO giving the community the ability to steer the direction of the protocol.\n\n<b>Upcoming Features</b>\n- veDFX: lock up your DFX for voting power on Liquidity Pool rewards allocation and a APR boost up to 2.5x\n- DFX2.0: any token can propose to list on DFX (including commodities such as Gold, Oil etc.) if they hold enough veDFX and pass the DFX snapshot DAO vote\n- Bribes: those holding DFX can be bribed to vote on snapshot proposal via hiddenhand\n- Lending/Borrowing: extending the Loan/Borrow ability on Euler from currently just CADC to all stablecoins on the platform\n\n<b>Partnerships</b>\n- Circle: close partner and also provider of the USDC and EUROC stablecoins\n- Insure DAO: to insure the liquidity pools if hacked\n- Bluejay Finance: specialises in non-usd stablecoin on/off ramps to fiat\n- Chainlink: provide the oracle to ensure super efficient prices match to real world exchange rates\n\n<b>Where to get DFX?</b>\nCEXes: Huobi, MEXC, CoinDCX and BitKan\nDEXes: 1inch, Balancer, Sushiswap dexes, TELcoin app\n\n<b>More Info</b>\ndocs.dfx.finance"
+            delete_message_by_type(bot, "summary", chat_id)
+            tlg_reply_message(message, summary_text, "summary")
         if command == "/delmsg":
             if is_admin and self.admin_exempt:
                 try:
