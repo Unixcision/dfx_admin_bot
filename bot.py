@@ -1356,11 +1356,19 @@ class TelegramMonitorBot:
             print("FAILED TO BAN USER: NOT FOUND")
         else:
             delete_message_by_type(bot, "banned-from-command", chat_id)
+            userdb = s.query(User).filter(User.id==user_id).first()
+            if userdb is not None:
+                complete_name = ''
+                if userdb.first_name is not None:
+                    complete_name = complete_name + userdb.first_name
+                if userdb.last_name is not None:
+                    complete_name = complete_name + ' ' + userdb.last_name
+                mention = "<a href='tg://user?id=" + str(user_id) + "'>" + complete_name + "</a>"
+                print(mention)
+                if silent == False:
+                    tlg_send_message(bot, CHAT_IDS, "⛔️ User " + mention + " has been banned", "banned-from-command", parse_mode=ParseMode.HTML)
             reason = "Banned by admin " + update.message.from_user.username
             self.ban_user_from_id(bot, user_id, reason=reason)
-            delete_message_by_type(bot, "banned-from-command", CHAT_IDS)
-            if silent == False:
-                tlg_send_message(bot, CHAT_IDS, "⛔️ User " + update.message.reply_to_message.from_user.mention_html() + " has been banned", "banned-from-command", parse_mode=ParseMode.HTML)
         s.close()
                 
     def hard_ban_command(self, bot, update, chat_id, silent, command):
@@ -1373,12 +1381,19 @@ class TelegramMonitorBot:
             print("FAILED TO BAN USER: NOT FOUND")
         else:
             delete_message_by_type(bot, "banned-from-command", chat_id)
+            userdb = s.query(User).filter(User.id==user_id).first()
+            if userdb is not None:
+                complete_name = ''
+                if userdb.first_name is not None:
+                    complete_name = complete_name + userdb.first_name
+                if userdb.last_name is not None:
+                    complete_name = complete_name + ' ' + userdb.last_name
+                mention = "<a href='tg://user?id=" + str(user_id) + "'>" + complete_name + "</a>"
+                if silent == False:
+                    tlg_send_message(bot, CHAT_IDS, "⛔️ User " + mention + " has been banned", "banned-from-command", parse_mode=ParseMode.HTML)
             reason = "Banned by admin " + update.message.from_user.username
             self.ban_user_from_id(bot, user_id, reason=reason)
-            delete_message_by_type(bot, "banned-from-command", CHAT_IDS)
             self.delete_messages_from_id(bot, user_id)
-            if silent == False:
-                tlg_send_message(bot, CHAT_IDS, "⛔️ User " + update.message.reply_to_message.from_user.mention_html() + " has been banned", "banned-from-command", parse_mode=ParseMode.HTML)
         s.close()
     
     def unban_command(self, bot, update, chat_id, command):
@@ -1390,7 +1405,7 @@ class TelegramMonitorBot:
         if user_id == '' or user_id is None:
             print("FAILED TO UNBAN USER: NOT FOUND")
         else:
-            bot.unban_chat_member(chat_id, user_id)
+            bot.unban_chat_member(chat_id, user_id, only_if_banned=True)
             s.query(UserBan).filter(UserBan.user_id==user_id).delete()
             user_unban = s.query(User).filter(User.id==user_id).first()     
             if user_unban is None:
