@@ -939,9 +939,10 @@ class TelegramMonitorBot:
                     user.username or
                     "{} {}".format(user.first_name, user.last_name) or
                     "<none>").encode("utf-8")
-                if 'vpn' in message.text.lower():
+                if 'vpn' in message.text.lower() and message.from_user.id not in self.get_admin_ids(bot, message.chat_id):
                     mention_html = message.from_user.mention_html()
-                    log_message = "❌ Message deleted. Sorry " + mention_html + " but talking about VPN services is not allowed. If you think it's an error, contact any admin to recover your message. You can check the list of admins using the /adminlist command.."
+                    bot.deleteMessage(message_id = message.message_id, chat_id = message.chat_id)
+                    log_message = "❌ Message deleted. Sorry " + mention_html + " but talking about VPN services is not allowed. If you think it's an error, contact any admin to recover your message. You can check the list of admins using the /adminlist command."
                     delete_message_by_type(bot, "not-authorized", CHAT_IDS)
                     tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized", parse_mode=ParseMode.HTML)
                 if message.text:
