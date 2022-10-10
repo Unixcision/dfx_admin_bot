@@ -1328,7 +1328,7 @@ class TelegramMonitorBot:
             tlg_reply_message(message, "http://dfx.finance/", "website")
         if command == "/adminlist":
             delete_message_by_type(bot, "admin-list", chat_id)
-            tlg_reply_message(message, "<b><u>DFX Finance Admins list:\n</u></b>- @CotyKuhn \n- @naisechef \n- @robeyryan \n- @danicryptonews \n- @Negitaro\n- @bigbossmanf\n- @AJ_DeFi \n- @Andrew_Pinch \n- @scottdoughty\n- @TheBigSur", "admin-list")
+            tlg_reply_message(message, "<b><u>DFX Finance Admins list:\n</u></b>- @CotyKuhn \n- @naisechef \n- @robeyryan \n- @danicryptonews \n- @snappycappy\n- @Negitaro\n- @bigbossmanf\n- @AJ_DeFi \n- @Andrew_Pinch \n- @scottdoughty\n- @TheBigSur", "admin-list")
         if command == "/twitter":
             delete_message_by_type(bot, "twitter", chat_id)
             tlg_reply_message(message, "https://twitter.com/DFXFinance", "twitter")
