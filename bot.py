@@ -532,7 +532,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary", "education"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary", "education", "adminlist"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -939,6 +939,11 @@ class TelegramMonitorBot:
                     user.username or
                     "{} {}".format(user.first_name, user.last_name) or
                     "<none>").encode("utf-8")
+                if 'vpn' in message.text.lower():
+                    mention_html = message.from_user.mention_html()
+                    log_message = "❌ Message deleted. Sorry " + mention_html + " but talking about VPN services is not allowed. If you think it's an error, contact any admin to recover your message. You can check the list of admins using the /adminlist command.."
+                    delete_message_by_type(bot, "not-authorized", CHAT_IDS)
+                    tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized", parse_mode=ParseMode.HTML)
                 if message.text:
                     mention_html = message.from_user.mention_html()
                     self.add_count_messages(user.id, bot, message.chat_id, mention_html)
@@ -1023,7 +1028,7 @@ class TelegramMonitorBot:
         for word in array_words:
             if word in bad_words:
                 badWord = True
-                break
+                break        
         if badWord == True:
             n = random.randint(0,(len(replies_bad_words)-1))
             message.reply_text(replies_bad_words[n])
@@ -1179,7 +1184,7 @@ class TelegramMonitorBot:
         print("command: {} seen in chat_id {}".format(command, chat_id))
         if BOT_ALIAS in command:
             command = command.replace("@" + BOT_ALIAS, "")
-        if command != None and command not in ["/contract", "/website", "/twitter", "/medium", "/summary", "/education"]:
+        if command != None and command not in ["/contract", "/website", "/twitter", "/medium", "/summary", "/education", "/adminlist"]:
             bot.deleteMessage(message_id = update.message.message_id, chat_id = chat_id)
         if command == "/dragon":
             n = random.randint(1,59)
@@ -1320,6 +1325,9 @@ class TelegramMonitorBot:
         if command == "/website":
             delete_message_by_type(bot, "website", chat_id)
             tlg_reply_message(message, "http://dfx.finance/", "website")
+        if command == "/adminlist":
+            delete_message_by_type(bot, "admin-list", chat_id)
+            tlg_reply_message(message, "<b><u>DFX Finance Admins list:\n</u></b>- @CotyKuhn \n- @naisechef \n- @robeyryan \n- @danicryptonews \n- @Negitaro\n- @bigbossmanf\n- @AJ_DeFi \n- @Andrew_Pinch \n- @scottdoughty\n- @TheBigSur", "admin-list")
         if command == "/twitter":
             delete_message_by_type(bot, "twitter", chat_id)
             tlg_reply_message(message, "https://twitter.com/DFXFinance", "twitter")
