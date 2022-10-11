@@ -532,7 +532,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary", "education", "adminlist"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary", "education", "dfx2", "adminlist"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -1185,7 +1185,7 @@ class TelegramMonitorBot:
         print("command: {} seen in chat_id {}".format(command, chat_id))
         if BOT_ALIAS in command:
             command = command.replace("@" + BOT_ALIAS, "")
-        if command != None and command not in ["/contract", "/website", "/twitter", "/medium", "/summary", "/education", "/adminlist"]:
+        if command != None and command not in ["/contract", "/website", "/twitter", "/medium", "/summary", "/education", "/dfx2", "/adminlist"]:
             bot.deleteMessage(message_id = update.message.message_id, chat_id = chat_id)
         if command == "/dragon":
             n = random.randint(1,59)
@@ -1336,9 +1336,13 @@ class TelegramMonitorBot:
             delete_message_by_type(bot, "medium", chat_id)
             tlg_reply_message(message, "https://medium.com/@dfxfinance/", "medium")
         if command == "/education":
-            education_text = "*** <b>DFX Education Zone</b> ***\n\nHere are some posts to educate yourself on DFX, the DAO and some features of the platform\n\n<b>DFX Summary:</b> https://t.me/DFX_Finance/54550\n\n<b>Proposals &amp; DAO Voting Process:</b> https://t.me/DFX_Finance/56321\n\n<b>veDFX rewards boost explained:</b> https://t.me/DFX_Finance/54903\n<b>veDFX voting explained:</b> https://t.me/DFX_Finance/54692\n\n<b>How to maximise earnings:</b> https://t.me/DFX_Finance/47143\n\n<b>DFX v2.0:</b> https://t.me/DFX_Finance/43205"
+            education_text = "<b>*** DFX Education Zone ***</b>\n\nHere are some posts to educate yourself on DFX, the DAO and some features of the platform\n\n<b>DFX Summary:</b> https://t.me/DFX_Finance/54550\n\n<b>Proposals &amp; DAO Voting Process:</b> https://t.me/DFX_Finance/56321\n\n<b>veDFX rewards boost explained:</b> https://t.me/DFX_Finance/54903\n<b>veDFX voting explained:</b> https://t.me/DFX_Finance/54692\n\n<b>How to maximise earnings:</b> https://t.me/DFX_Finance/47143\n\n<b>DFX v2.0 summary:</b> https://t.me/DFX_Finance/43205\n\n<b>DFX v2.0 - add a new pool &amp; incentivise it: </b>https://t.me/DFX_Finance/58755"
             delete_message_by_type(bot, "education", chat_id)
             tlg_reply_message(message, education_text, "education")
+        if command == "/dfx2":
+            dfx2_text = "<b>** Education Zone - DFX 2.0: How to list and incentivise a new pool **</b>\n\nThere are 3 main steps to do this:\n\n1) add a new liquidity pool\nhttps://t.me/DFX_Finance/58752\n\n2) add a gauge (ability to receive rewards) to the pool\nhttps://t.me/DFX_Finance/58753\n\n3) allocate rewards to the pool\nhttps://t.me/DFX_Finance/58754"
+            delete_message_by_type(bot, "dfx2", chat_id)
+            tlg_reply_message(message, dfx2_text, "dfx2")
         if command == "/summary":
             summary_text = "<b>*** DFX Summary ***\n</b>Forex (FX) Decentralized Exchange specializing in Non-USD Stablecoins that are backed 1:1 with their fiat equivalent. Current Non-USD Stablecoin offerings include:\nCADC 🇨🇦 , EUROC &amp; EURS🇪🇺, XSGD 🇸🇬, GYEN 🇯🇵, NZDS 🇳🇿, XIDR 🇮🇩, TRYB 🇹🇷 all paired with  USDC 🇺🇸\n\nallowing users of the platform to swap one stablecoin for another at the cost of 0.05% fee (a regular bank charges 2% upwards to swap currencies, so DFX is 40x cheaper than a bank)\n\n<b>How does this work?:\n</b>- liquidity providers provide liquidity to the stablcoin pools by staking a pair of stablecoin tokens on \nhttps://app.dfx.finance/pools\n- users of the platform exchange one stablecoin for another and as part of the transaction a 0.05% swap fee is taken\n- liquidity providers receive swap fees (added back to the pool on every swap), and incentives from DFX in the form of DFX tokens (claimable at your convenience) resulting in an avg APR between 8%-46% (depending on the pool you provide liquidity too).\n- DFX tokens can then be locked into veDFX to give a boost in the APR received from their liquidity pool investment up to 2.5x\n- DFX tokens can also be used to vote on proposals within the DAO giving the community the ability to steer the direction of the protocol.\n\n<b>Upcoming Features\n</b>- veDFX: lock up your DFX for voting power on Liquidity Pool rewards allocation and a APR boost up to 2.5x\n- DFX2.0: any token can propose to list on DFX (including commodities such as Gold, Oil etc.) if they hold enough veDFX and pass the DFX snapshot DAO vote\n- Bribes: those holding DFX can be bribed to vote on snapshot proposal via hiddenhand\n- Lending/Borrowing: extending the Loan/Borrow ability on Euler from currently just CADC to all stablecoins on the platform\n\n<b>Partnerships\n</b>- Circle: close partner and also provider of the USDC and EUROC stablecoins\n- Insure DAO: to insure the liquidity pools if hacked\n- Bluejay Finance: specialises in non-usd stablecoin on/off ramps to fiat\n- Chainlink: provide the oracle to ensure super efficient prices match to real world exchange rates\n\n<b>Where to get DFX?\n</b>CEXes: Huobi, MEXC, CoinDCX and BitKan\nDEXes: 1inch, Balancer, Sushiswap dexes, TELcoin app\n\n<b>More Info\n</b>docs.dfx.finance"
             delete_message_by_type(bot, "summary", chat_id)
