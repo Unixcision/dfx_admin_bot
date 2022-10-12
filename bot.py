@@ -1336,11 +1336,11 @@ class TelegramMonitorBot:
             delete_message_by_type(bot, "medium", chat_id)
             tlg_reply_message(message, "https://medium.com/@dfxfinance/", "medium")
         if command == "/education":
-            education_text = "<b>*** DFX Education Zone ***</b>\n\nHere are some posts to educate yourself on DFX, the DAO and some features of the platform\n\n<b>DFX Summary:</b> https://t.me/DFX_Finance/54550\n\n<b>Proposals &amp; DAO Voting Process:</b> https://t.me/DFX_Finance/56321\n\n<b>veDFX rewards boost explained:</b> https://t.me/DFX_Finance/54903\n<b>veDFX voting explained:</b> https://t.me/DFX_Finance/54692\n\n<b>How to maximise earnings:</b> https://t.me/DFX_Finance/47143\n\n<b>DFX v2.0 summary:</b> https://t.me/DFX_Finance/43205\n\n<b>DFX v2.0 - add a new pool &amp; incentivise it: </b>https://t.me/DFX_Finance/58755"
+            education_text = "<b> *** DFX Education Zone ***</b>\n\nHere are some posts to educate yourself on DFX, the DAO and some features of the platform\n\n<b>DFX Summary:</b> https://t.me/DFX_Finance/54550\n<b>DFX Complete Guide:</b> https://blocmates.com/blogmates/what-is-dfx-finance-a-complete-guide/\n\n<b>Proposals &amp; DAO Voting Process:</b> https://t.me/DFX_Finance/56321\n\n<b>veDFX rewards boost explained:</b> https://t.me/DFX_Finance/54903\n<b>veDFX voting explained:</b> https://t.me/DFX_Finance/54692\n\n<b>How to maximise earnings:</b> https://t.me/DFX_Finance/47143\n\n<b>DFX v2.0 summary:</b> https://t.me/DFX_Finance/43205\n\n<b>DFX v2.0 - add a new pool &amp; incentivise it: </b>https://t.me/DFX_Finance/58755\n\n<b>Voting Going Forwards (community, snapshot, guage)</b> - https://t.me/DFX_Finance/58891"
             delete_message_by_type(bot, "education", chat_id)
             tlg_reply_message(message, education_text, "education")
         if command == "/dfx2":
-            dfx2_text = "<b>** Education Zone - DFX 2.0: How to list and incentivise a new pool **</b>\n\nThere are 3 main steps to do this:\n\n1) add a new liquidity pool\nhttps://t.me/DFX_Finance/58752\n\n2) add a gauge (ability to receive rewards) to the pool\nhttps://t.me/DFX_Finance/58753\n\n3) allocate rewards to the pool\nhttps://t.me/DFX_Finance/58754"
+            dfx2_text = "<b>*** Education Zone - DFX 2.0: How to list and incentivise a new pool ***</b>\n\nThere are 3 main steps to do this:\n\n1) add a new liquidity pool\nhttps://t.me/DFX_Finance/58752\n\n2) add a gauge (ability to receive rewards) to the pool\nhttps://t.me/DFX_Finance/58753\n\n3) allocate rewards to the pool\nhttps://t.me/DFX_Finance/58754"
             delete_message_by_type(bot, "dfx2", chat_id)
             tlg_reply_message(message, dfx2_text, "dfx2")
         if command == "/summary":
