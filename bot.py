@@ -340,7 +340,7 @@ def daily_description(bot):
         while hour_to_send >= 24:
             hour_to_send = hour_to_send - 24
         if now.hour == hour_to_send and now.minute == 0:
-            text_to_send = "👋🏻 Hello everyone!\nI am DFX Bot and I am here to serve you. Let me explain what I can do for you.\n\n🤖 You can use these commands in this chat and they will do the described:\n/dragon → Post a random dragon image\n/kevin → Post a Kevin's image\n/adrian → Post an Adrian's image\n/gm → Post a Good Morning image\n/coty → Post a Coty's image\n/jim → Post a Jim's image\n/hopium → Post an hopium image\n/price → Displays the price\n/whalechart → Post the whale chart\n/maticrpc → Post the matic rpc configuration\n/vote → Post the vote tutorial\n/supply → Displays the current supply\n/top10level → Displays the top 10 users by their level\n/mylevel → Shows your level to the world\n\n🦸‍♂️ I am also a <b>moderator</b>, I do not allow you to send links or media files until you reach level 1 through your contributions to the group.\n\nAnd how do I level up? It's easy, just receive \"+1\" in reply to your messages and <b>write content that adds value</b> to the conversation.\n\n✍️ Reply with +1 to the messages that <b>you consider valuable</b> to contribute to this system.\n\n🔔 <b>Start a converation with me privately</b> if you want to get updated when someone adds reputation to you.\n\n❤️ Have a lovely day and thank you for supporting DFX! ❤️"
+            text_to_send = "👋🏻 Hello everyone!\nI am DFX Bot and I am here to serve you. Let me explain what I can do for you.\n\n🤖 You can use these commands in this chat and they will do the described:\n\n/help get a complete list of all commands\n\n/summary a short summary of what dfx is and does\n\n/education a few links and short pieces describing dfx and its features, educate yourself\n\n🦸‍♂️ to send links or media files you need reach level 1 through your contributions to the group.\n\nhow do you level up? It&#x27;s easy, just receive &quot;+1&quot; in reply to your messages and <b>write content that adds value</b> to the conversation.\n\n✍️ Reply with +1 to the messages that <b>you consider valuable</b> to contribute to this system.\n\n🔔 <b>Start a converation with me privately</b> if you want to get updated when someone adds reputation to you.\n\n❤️ Have a lovely day and thank you for supporting DFX! ❤️"
             delete_message_by_type(bot, "daily-explain", CHAT_IDS)
             tlg_send_message(bot, CHAT_IDS, text_to_send, "daily-explain", parse_mode=ParseMode.HTML)
         
@@ -532,7 +532,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary", "education", "dfx2", "adminlist"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary", "education", "dfx2", "adminlist", "help"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -1185,7 +1185,7 @@ class TelegramMonitorBot:
         print("command: {} seen in chat_id {}".format(command, chat_id))
         if BOT_ALIAS in command:
             command = command.replace("@" + BOT_ALIAS, "")
-        if command != None and command not in ["/contract", "/website", "/twitter", "/medium", "/summary", "/education", "/dfx2", "/adminlist"]:
+        if command != None and command not in ["/contract", "/website", "/twitter", "/medium", "/summary", "/education", "/dfx2", "/adminlist", "/help"]:
             bot.deleteMessage(message_id = update.message.message_id, chat_id = chat_id)
         if command == "/dragon":
             n = random.randint(1,59)
@@ -1326,6 +1326,10 @@ class TelegramMonitorBot:
         if command == "/website":
             delete_message_by_type(bot, "website", chat_id)
             tlg_reply_message(message, "http://dfx.finance/", "website")
+        if command == "/help":
+            delete_message_by_type(bot, "help", chat_id)
+            help_text = "<b><u>These are the commands available on this group:\n</u></b>- /dragon → Post a random dragon image\n- /kevin → Post a Kevin&#x27;s image\n- /adrian → Post an Adrian&#x27;s image\n- /gm → Post a Good Morning image\n- /coty → Post a Coty&#x27;s image\n- /jim → Post a Jim&#x27;s image\n- /hopium → Post an hopium image\n- /price → Displays the price\n- /whalechart → Post the whale chart\n- /maticrpc → Post the matic rpc configuration\n- /vote → Post the vote tutorial\n- /supply → Displays the current supply\n- /top10level → Displays the top 10 users by their level\n- /mylevel → Shows your level to the world\n- /contract → Displays the contract address\n- /website → Displays the website link\n- /twitter → Displays the Twitter link\n- /medium → Displays the Medium link\n- /summary → Displays a summary of DFX\n- /education → Displays some links to learn about DFXFinance\n- /adminlist → Displays the admin list of the group\n- /dfx2 → Displays info about DFX2.0\n- /help → Displays this message\n\n🔔 <b>Start a converation with me privately</b> if you want to get updated when someone adds reputation to you.\n\n✍️ Reply with +1 to the messages that <b>you consider valuable</b> to contribute to this system."
+            tlg_reply_message(message, help_text, "help")
         if command == "/adminlist":
             delete_message_by_type(bot, "admin-list", chat_id)
             tlg_reply_message(message, "<b><u>DFX Finance Admins list:\n</u></b>- @CotyKuhn \n- @naisechef \n- @robeyryan \n- @danicryptonews \n- @snappycappy\n- @Negitaro\n- @bigbossmanf\n- @AJ_DeFi \n- @Andrew_Pinch \n- @scottdoughty\n- @TheBigSur", "admin-list")
