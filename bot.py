@@ -532,7 +532,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "all", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary", "education", "dfx2", "adminlist", "help"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary", "education", "dfx2", "adminlist", "help"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -1274,14 +1274,7 @@ class TelegramMonitorBot:
         if command == "/bansilent":
             if is_admin and self.admin_exempt:
                 silent = True
-                self.ban_command(bot, update, chat_id, silent, (command + " "))
-        if command == "/all":
-            if is_admin and self.admin_exempt:
-                con = engine.connect()
-                result = con.execute("SELECT array_to_string(array_agg(CONCAT('<a href=''tg://user?id=', id)),'''>&#8288;</a>') AS result FROM telegram_users;")
-                mencion_todos = str(result.fetchone()).replace("(", "").replace("\"", "").replace(",", "").replace(")", "") + "'>\&#8288;/a>🛎 Hello everyone!"
-                print(mencion_todos)
-                tlg_send_message(bot, chat_id, mencion_todos, "banned-from-command", parse_mode=ParseMode.HTML)           
+                self.ban_command(bot, update, chat_id, silent, (command + " "))    
         if command == "/hardbansilent":
             if is_admin and self.admin_exempt:
                 silent = True
@@ -1372,7 +1365,6 @@ class TelegramMonitorBot:
         if user_id == '' or user_id is None:
             print("FAILED TO BAN USER: NOT FOUND")
         else:
-            delete_message_by_type(bot, "banned-from-command", chat_id)
             userdb = s.query(User).filter(User.id==user_id).first()
             if userdb is not None:
                 complete_name = ''
@@ -1396,8 +1388,7 @@ class TelegramMonitorBot:
         print("Going to ban user_id", user_id)
         if user_id == '' or user_id is None:
             print("FAILED TO BAN USER: NOT FOUND")
-        else:
-            delete_message_by_type(bot, "banned-from-command", chat_id)
+        else:            
             userdb = s.query(User).filter(User.id==user_id).first()
             if userdb is not None:
                 complete_name = ''
