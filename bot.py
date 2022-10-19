@@ -608,7 +608,10 @@ class TelegramMonitorBot:
             s.close()  
     def onjoin(self, update, context):
         print("onjoin")
-        context.bot.delete_message(chat_id=update.message.chat_id,message_id=update.message.message_id)
+        try:
+            context.bot.delete_message(chat_id=update.message.chat_id,message_id=update.message.message_id)
+        except Exception as e: print('Error normal 322')
+        
     def onleft(self, update, context):
         print("onleft")
         context.bot.delete_message(chat_id=update.message.chat_id,message_id=update.message.message_id)
@@ -642,27 +645,6 @@ class TelegramMonitorBot:
             captcha_config = s.query(MiscData).filter_by(key = "captcha").first().data
             welcome_config = s.query(MiscData).filter_by(key = "welcome_msg").first().data
             print("New member!\nCaptcha: " + captcha_config + "\nWelcome Msg: " + welcome_config)
-            if welcome_config == 'true':
-                delete_message_by_type(context.bot, "welcome", update.effective_chat.id)
-                message = f"Hello and Welcome {member_name} to the Official DFX Finance Telegram Channel! 🔥🐉\n\nThank you so much for taking the time to stop by and from all of us at DFX, we hope you have a great day! ☀️"
-                reply_markup = InlineKeyboardMarkup([
-                        [InlineKeyboardButton(text='Check out our Linktree', url='https://linktr.ee/dfxfinance')]
-                ])
-                tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup, parse_mode=ParseMode.HTML, disable_notification=True)
-            verified = 0
-            if captcha_config == 'true':
-                verified = 0
-                messageCaptcha = "Before you can post to the group you must complete a CAPTCHA, do this and all your questions will be answered."
-                reply_markup_captcha = InlineKeyboardMarkup([
-                        [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
-                ])
-                delete_message_by_type(context.bot, "captcha", update.effective_chat.id)
-                msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha, parse_mode=ParseMode.HTML, disable_notification=True)
-                captcha_msg = msg['msg'].message_id
-            else:
-                verified = 1
-                captcha_msg = 0
-            
             user = update.chat_member.new_chat_member.user
             if not self.id_exists(user.id):
                 add_user_success = self.add_user(
@@ -670,7 +652,7 @@ class TelegramMonitorBot:
                     user.first_name,
                     user.last_name,
                     user.username,
-                    verified,captcha_msg)
+                    0,0)
                 if add_user_success:
                     print("User added: {}".format(user.id))
                 else:
@@ -696,7 +678,37 @@ class TelegramMonitorBot:
                     can_invite_users=False,
                     can_pin_messages=False,
                 )
-                context.bot.restrict_chat_member(update.effective_chat.id, user.id, permissions)          
+                context.bot.restrict_chat_member(update.effective_chat.id, user.id, permissions)    
+            if welcome_config == 'true':
+                delete_message_by_type(context.bot, "welcome", update.effective_chat.id)
+                message = f"Hello and Welcome {member_name} to the Official DFX Finance Telegram Channel! 🔥🐉\n\nThank you so much for taking the time to stop by and from all of us at DFX, we hope you have a great day! ☀️"
+                reply_markup = InlineKeyboardMarkup([
+                        [InlineKeyboardButton(text='Check out our Linktree', url='https://linktr.ee/dfxfinance')]
+                ])
+                tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup, parse_mode=ParseMode.HTML, disable_notification=True)
+            if captcha_config == 'true':
+                con = engine.connect()
+                result = con.execute("SELECT array_to_string(array_agg(CONCAT('<a href=''tg://user?id=', id)),'''>&#8288;</a>') AS result FROM telegram_users WHERE verified = false AND id NOT IN (SELECT user_id from telegram_user_bans);")
+                messageCaptcha = ""
+                if result is None:
+                    messageCaptcha = "Before you can post to the group you must complete a CAPTCHA, do this and all your questions will be answered."
+                else:
+                    mention_unverified = str(result.fetchone()).replace("(", "").replace("\"", "").replace(",", "").replace(")", "") + "'>&#8288;</a>"
+                    messageCaptcha = mention_unverified + "Before you can post to the group you must complete a CAPTCHA, do this and all your questions will be answered."
+                print(messageCaptcha)
+                reply_markup_captcha = InlineKeyboardMarkup([
+                        [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
+                ])
+                delete_message_by_type(context.bot, "captcha", update.effective_chat.id)
+                msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha, parse_mode=ParseMode.HTML, disable_notification=True)
+                captcha_msg = msg['msg'].message_id
+            else:
+                s = session()
+                usuario = s.query(User).filter_by(id=user.id).first()
+                usuario.verified = 1
+                s.merge(usuario)
+                s.commit()
+                s.close()                       
 
         
     def security_check_username(self, bot, update):
