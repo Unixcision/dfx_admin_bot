@@ -413,14 +413,14 @@ def twitter_reader(bot):
         s.close()
         sleep(120)		
 
-def tlg_send_message(bot, chat_id, message, type, reply_markup=None, reply_to_message_id=None, parse_mode=None):
+def tlg_send_message(bot, chat_id, message, type, reply_markup=None, reply_to_message_id=None, parse_mode=None, disable_notification=None):
     '''Bot try to send a message'''
     print("tlg_send_message")        
     sent_result = dict()
     sent_result["msg"] = None
     sent_result["error"] = ""
     try:
-        sent_result["msg"] = bot.send_message(chat_id, message, reply_to_message_id=reply_to_message_id, reply_markup=reply_markup, parse_mode=parse_mode)
+        sent_result["msg"] = bot.send_message(chat_id, message, reply_to_message_id=reply_to_message_id, reply_markup=reply_markup, parse_mode=parse_mode, disable_notification=disable_notification)
     except TelegramError as e:
         sent_result["error"] = str(e)
         print("[{}] {}".format(chat_id, sent_result["error"]))
@@ -648,7 +648,7 @@ class TelegramMonitorBot:
                 reply_markup = InlineKeyboardMarkup([
                         [InlineKeyboardButton(text='Check out our Linktree', url='https://linktr.ee/dfxfinance')]
                 ])
-                tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+                tlg_send_message(context.bot, update.effective_chat.id, message, "welcome", reply_markup=reply_markup, parse_mode=ParseMode.HTML, disable_notification=True)
             verified = 0
             if captcha_config == 'true':
                 verified = 0
@@ -657,7 +657,7 @@ class TelegramMonitorBot:
                         [InlineKeyboardButton(text='Resolve CAPTCHA', url='https://t.me/' + BOT_ALIAS + '?start')]
                 ])
                 delete_message_by_type(context.bot, "captcha", update.effective_chat.id)
-                msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha, parse_mode=ParseMode.HTML)
+                msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha, parse_mode=ParseMode.HTML, disable_notification=True)
                 captcha_msg = msg['msg'].message_id
             else:
                 verified = 1
