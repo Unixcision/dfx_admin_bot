@@ -702,6 +702,12 @@ class TelegramMonitorBot:
                 delete_message_by_type(context.bot, "captcha", update.effective_chat.id)
                 msg = tlg_send_message(context.bot, update.effective_chat.id, messageCaptcha, "captcha", reply_markup=reply_markup_captcha, parse_mode=ParseMode.HTML, disable_notification=True)
                 captcha_msg = msg['msg'].message_id
+                s = session()
+                usuario = s.query(User).filter_by(id=user.id).first()
+                usuario.captcha_message = captcha_msg
+                s.merge(usuario)
+                s.commit()
+                s.close()      
             else:
                 s = session()
                 usuario = s.query(User).filter_by(id=user.id).first()
