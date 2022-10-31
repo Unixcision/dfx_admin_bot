@@ -39,7 +39,7 @@ class Message(Base):
     id = Column(BigInteger, primary_key=True)
     user_id = Column(BigInteger, ForeignKey('telegram_users.id'), nullable=False)
     message = Column(String)
-    message_id = Column(BigInteger)
+    message_id = Column(BigInteger, unique=True)
     last_edit = Column(String)
     chat_id = Column(BigInteger)
     time = Column(DateTime, default=func.now())
@@ -84,7 +84,7 @@ class Tweets(Base):
 class UserReputation(Base):
     __tablename__ = 'telegram_user_reputation'
     owner_id = Column(BigInteger, ForeignKey('telegram_users.id'), nullable=False, primary_key=True)
-    message_id = Column(BigInteger, ForeignKey('telegram_messages.id'), nullable=False, primary_key=True)
+    message_id = Column(BigInteger, ForeignKey('telegram_messages.message_id'), nullable=False, primary_key=True)
     voter_id = Column(BigInteger, ForeignKey('telegram_users.id'), nullable=False, primary_key=True)
 
 from sqlalchemy import create_engine
