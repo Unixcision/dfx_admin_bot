@@ -1305,7 +1305,7 @@ class TelegramMonitorBot:
         if command == "/vote":
             image = "guides/vote.jpg"
             delete_message_by_type(bot, "image-guide", chat_id)
-            caption = "<b>Forum</b>\nhttps://forum.dfx.finance/\n\n<b>Voting</b>\nhttps://vote.dfx.finance/#/\n\n<b>Docs</b>\nhttps://docs.dfx.finance/\n\n<b>Proposal Template</b>\nhttps://docs.google.com/document/d/1ghkenFXHT5n0OtdsE0BWgmaJj2JS5Rg4/edit?usp=sharing&ouid=109120569613830820828&rtpof=true&sd=true"
+            caption = '<b><u>Forum</u></b>: <a href="https://forum.dfx.finance/">https://forum.dfx.finance/\n\n</a><b><u>Voting</u></b>: <a href="https://vote.dfx.finance/#/">https://vote.dfx.finance/#/\n\n</a><b><u>Docs</u></b>: <a href="https://docs.dfx.finance/">https://docs.dfx.finance/\n\n</a><b><u>Proposal Template</u></b>: https://forum.dfx.finance/t/dfx-proposal-template/314'
             tlg_send_image(bot, chat_id, open(image, 'rb'), "image-guide", caption=caption, parse_mode="HTML")
         if command == "/enablewelcome":
             if is_admin and self.admin_exempt:
@@ -1571,7 +1571,7 @@ class TelegramMonitorBot:
             todayHoldersEth = len(json.loads(holders_request.text)['data']['items'])
             todayHoldersPoly = int(data['hodlers']['polygon']['today'].replace(',', ''))
             todayHolders = todayHoldersEth + todayHoldersPoly
-            h_change=data['24h_change']           
+            h_change="{0:+g}".format(round(datacg['market_data']['price_change_percentage_24h'],2)) + '%' 
             text = '📊 <b>DFX stats at ' + str(datetime.now(timezone.utc).strftime("%Y/%m/%d %H:%M")) + '</b>\n<b>Price:</b>  ' + str(price) + '$\n<b>Sats:</b> ' + satoshi + '\n<b>MarketCap:</b> ' + format(int(marketcap_btc),",") + '$\n<b>Circulating Supply:</b> ' + str(circulating_supply) + '\n<b>Volume:</b> ' + format(int(volume),",") + '$\n<b>Wallets:</b> ' + format(int(todayHolders),",") + '\n<b>24h change:</b> ' + h_change
         else:
             raise Exception('Query failed and return code is ' +  + '.      ' +  + ''.format(request.status_code,
