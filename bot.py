@@ -1240,7 +1240,7 @@ class TelegramMonitorBot:
             self.price(bot, chat_id)
         if command == "/whalechart":
             delete_message_by_type(bot, "whalechart", chat_id)
-            tlg_send_message(bot, chat_id, "500 DFX - Shrimp 🦐 \n500 - 2000 DFX - Crab 🦀 \n2K - 10K DFX - Tropical Fish 🐠 \n10K - 20K DFX - Octopus 🐙 \n20K - 30K DFX - Dolphin 🐬 \n30K - 50K DFX - Shark 🦈 \n50K - 75K DFX - Baby Whale 🐳 \n75K - 100K DFX - Whale 🐋 \n100K - 200K DFX - Dragon 🐉 \n200K++ DFX - Mythical Dragon 🐲", "whalechart", parse_mode=ParseMode.HTML)
+            tlg_send_message(bot, chat_id, "1-1K DFX - Shrimp 🦐 \n1K - 5K DFX - Crab 🦀 \n5K - 15K DFX - Tropical Fish 🐠 \n15K - 30K DFX - Octopus 🐙 \n30K - 60K DFX - Dolphin 🐬 \n60K - 100K DFX - Shark 🦈 \n100K - 150K DFX - Baby Whale 🐳 \n150K - 200K DFX - Whale 🐋 \n200K - 400K DFX - Dragon 🐉 \n400K++ DFX - Mythical Dragon 🐲", "whalechart", parse_mode=ParseMode.HTML)
         if command == "/unban":
             if is_admin and self.admin_exempt:
                 self.unban_command(bot, update, chat_id, (command + " "))
