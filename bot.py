@@ -34,7 +34,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Tuple, Optional
 from urlextract import URLExtract
 from telegram import *
-from telegram.ext import * 
+from telegram.ext import *
 from requests import *
 from sqlalchemy import func
 from model import User, Message, MessageHide, UserBan, session, engine, BotMessages, Captcha, MiscData, Tweets, UserReputation
@@ -57,7 +57,7 @@ extractor = URLExtract()
 
 load_dotenv('.env')  # load main .env file
 environment = os.getenv("ENVIRONMENT")
-print("Environment: " + environment)
+print(str(datetime.now()) + " Environment: " + environment)
 
 sub_env = '.env.' + environment
 load_dotenv(sub_env)  # load main .env file
@@ -127,10 +127,12 @@ to_delete_in_time_messages_list = []
 new_users = {}
 tweets = []
 
+warnings_for_ban = 4
+
 logger = logging.getLogger()
 
 def first_of(attr, match, it):
-    print("first_of")
+    print(str(datetime.now()) + " first_of")
     """ Return the first item in a set with an attribute that matches match """
     if it is not None:
         for i in it:
@@ -143,7 +145,7 @@ def first_of(attr, match, it):
 
 
 def command_from_message(message, default=None):
-    print("command_from_message")
+    print(str(datetime.now()) + " command_from_message")
     """ Extracts the first command from a Telegram Message """
     if not message or not message.text:
         return default
@@ -186,7 +188,7 @@ def extract_status_change(
     return was_member, is_member
 
 def track_chats(update: Update, context: CallbackContext) -> None:
-    print("track_chats")
+    print(str(datetime.now()) + " track_chats")
     """Tracks the chats the bot is in."""
     result = extract_status_change(update.my_chat_member)
     if result is None:
@@ -263,7 +265,7 @@ def tlg_send_image(bot, chat_id, photo, type, caption=None,
             timeout=timeout, parse_mode=parse_mode)
     except TelegramError as e:
         sent_result["error"] = str(e)
-        print("[{}] {}".format(chat_id, sent_result["error"]))
+        print(str(datetime.now()) + " [{}] {}".format(chat_id, sent_result["error"]))
     try:
         if type is not None:
             s = session()
@@ -276,7 +278,7 @@ def tlg_send_image(bot, chat_id, photo, type, caption=None,
             s.commit()
             s.close()
     except Exception as e:
-        print("Error[347]: {}".format(e))
+        print(str(datetime.now()) + " Error[347]: {}".format(e))
         print(traceback.format_exc())
     return sent_result
     
@@ -294,40 +296,47 @@ def tlg_send_file(bot, chat_id, file, type, caption=None,
             timeout=timeout, parse_mode=parse_mode)
     except TelegramError as e:
         sent_result["error"] = str(e)
-        print("[{}] {}".format(chat_id, sent_result["error"]))
+        print(str(datetime.now()) + " [{}] {}".format(chat_id, sent_result["error"]))
     return sent_result
 
 def ban_not_verified(bot):
+    count = 0
     while True:
         sleep(5)
-        s = session()
-        usuarios = s.query(User).filter_by(verified=False)
-        for usuario in usuarios:
-            baneado = s.query(UserBan).filter_by(user_id=usuario.id).first()
-            if baneado is not None:
-                continue
-            print("El usuario", usuario.first_name, usuario.username, "puede ser baneado")
-            difference = datetime.now() - usuario.join_datetime
-            seconds = difference.total_seconds()
-            if seconds > 300:
-                print("BANEADO ID: " + str(usuario.id) + " Nombre: " + str(usuario.first_name) + " Alias: " + str(usuario.username))
-                try:
-                    bot.deleteMessage(message_id = usuario.captcha_message, chat_id = CHAT_IDS)
-                except Exception as e:
-                    print("[002] Error normal, no pasa na")
-                # removed banning from captcha
-                # bot.kick_chat_member(chat_id=CHAT_IDS, user_id=usuario.id) 
-                s = session()
-                userBan = UserBan(
-                    user_id=usuario.id,
-                    reason="CAPTCHA not completed in time")
-                s.add(userBan)
-                s.commit()
-                captcha_attemps = s.query(Captcha).filter_by(user_id=usuario.id).first()
-                if captcha_attemps:
-                    captcha_attemps.attemps = 0
-                    s.merge(captcha_attemps)
-        s.close()
+        if count % 5 == 0:
+            print(str(datetime.now()) + " ban_not_verified funcionando...")
+        count = count + 1
+        try:        
+            s = session()
+            usuarios = s.query(User).filter_by(verified=False)
+            for usuario in usuarios:
+                baneado = s.query(UserBan).filter_by(user_id=usuario.id).first()
+                if baneado is not None:
+                    continue
+                print(str(datetime.now()) + " El usuario", usuario.first_name, usuario.username, "puede ser baneado")
+                difference = datetime.now() - usuario.join_datetime
+                seconds = difference.total_seconds()
+                if seconds > 300:
+                    print(str(datetime.now()) + " BANEADO ID: " + str(usuario.id) + " Nombre: " + str(usuario.first_name) + " Alias: " + str(usuario.username))
+                    try:
+                        bot.deleteMessage(message_id = usuario.captcha_message, chat_id = CHAT_IDS)
+                    except Exception as e:
+                        print(str(datetime.now()) + " [002] Error normal, no pasa na")
+                    # removed banning from captcha
+                    # bot.kick_chat_member(chat_id=CHAT_IDS, user_id=usuario.id) 
+                    s = session()
+                    userBan = UserBan(
+                        user_id=usuario.id,
+                        reason="CAPTCHA not completed in time")
+                    s.add(userBan)
+                    s.commit()
+                    captcha_attemps = s.query(Captcha).filter_by(user_id=usuario.id).first()
+                    if captcha_attemps:
+                        captcha_attemps.attemps = 0
+                        s.merge(captcha_attemps)
+            s.close()
+        except Exception as e:
+            print(str(datetime.now()) + " Error en ban_not_verified pero continuando")
         
 def daily_description(bot):
     # You told me to make it run every 30h, but as I start and stop the bot
@@ -376,21 +385,21 @@ def clean_messages(bot):
                 try:
                     bot.deleteMessage(message_id = bot_message.id, chat_id = CHAT_IDS)
                 except Exception as e:
-                    print("[003] Error normal, no pasa na")           
+                    print(str(datetime.now()) + " [003] Error normal, no pasa na")           
                 s.delete(bot_message)
                 s.commit()
         s.close()
         
 def twitter_reader(bot):
-    if environment == 'test':
-        print("Disable Tweet reader in test environment")
+    if environment == 'test' or True:
+        print(str(datetime.now()) + " Disable Tweet reader in test environment")
         return
     while True:    
         s = session()    
         scraper = snscrape.modules.twitter.TwitterSearchScraper('from:@DFXFinance since:2022-05-31 -filter:replies').get_items()
         sliced_scraped_tweets = itertools.islice(scraper, 3)      
         for tweet in sliced_scraped_tweets:       
-            print("Reading Tweet", tweet.url)
+            print(str(datetime.now()) + " Reading Tweet", tweet.url)
             if len(s.query(Tweets).filter_by(url=tweet.url).all()) >= 1:
                 continue
             message = '🔥 <b>DFX Team just Tweeted</b>\n' + tweet.rawContent + '\n\n<b>Posted on:</b> ' + str(tweet.date) +  '\n<b>Tweet link:</b> ' + tweet.url
@@ -411,11 +420,11 @@ def twitter_reader(bot):
             x = requests.post(url, data = myobj)  
             print(x)
         s.close()
-        sleep(120)		
+        sleep(120)        
 
 def tlg_send_message(bot, chat_id, message, type, reply_markup=None, reply_to_message_id=None, parse_mode=None, disable_notification=None):
     '''Bot try to send a message'''
-    print("tlg_send_message")        
+    print(str(datetime.now()) + " tlg_send_message")        
     sent_result = dict()
     sent_result["msg"] = None
     sent_result["error"] = ""
@@ -423,7 +432,7 @@ def tlg_send_message(bot, chat_id, message, type, reply_markup=None, reply_to_me
         sent_result["msg"] = bot.send_message(chat_id, message, reply_to_message_id=reply_to_message_id, reply_markup=reply_markup, parse_mode=parse_mode, disable_notification=disable_notification)
     except TelegramError as e:
         sent_result["error"] = str(e)
-        print("[{}] {}".format(chat_id, sent_result["error"]))
+        print(str(datetime.now()) + " [{}] {}".format(chat_id, sent_result["error"]))
     try:
         if type is not None:
             s = session()
@@ -436,12 +445,12 @@ def tlg_send_message(bot, chat_id, message, type, reply_markup=None, reply_to_me
             s.commit()
             s.close()
     except Exception as e:
-        print("Error[347]: {}".format(e))
+        print(str(datetime.now()) + " Error[347]: {}".format(e))
         print(traceback.format_exc())
     return sent_result 
     
 def tlg_reply_message(message, text, type):
-    print("tlg_reply_message")        
+    print(str(datetime.now()) + " tlg_reply_message")        
     sent_result = dict()
     sent_result["msg"] = None
     sent_result["error"] = ""
@@ -449,7 +458,7 @@ def tlg_reply_message(message, text, type):
         sent_result["msg"] = message.reply_text(text=text, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
     except TelegramError as e:
         sent_result["error"] = str(e)
-        print("[{}] {}".format(message.chat_id, sent_result["error"]))
+        print(str(datetime.now()) + " [{}] {}".format(message.chat_id, sent_result["error"]))
     try:
         if type is not None:
             s = session()
@@ -462,7 +471,7 @@ def tlg_reply_message(message, text, type):
             s.commit()
             s.close()
     except Exception as e:
-        print("Error[347]: {}".format(e))
+        print(str(datetime.now()) + " Error[347]: {}".format(e))
         print(traceback.format_exc())
     
 def delete_message_by_type(bot, type, chat_id):
@@ -483,7 +492,7 @@ class TelegramMonitorBot:
     def __init__(self):
         load_dotenv('.env')  # load main .env file
         environment = os.getenv("ENVIRONMENT")
-        print("Environment: " + environment)
+        print(str(datetime.now()) + " Environment: " + environment)
 
         sub_env = '.env.' + environment
         load_dotenv(sub_env)  # load main .env file
@@ -496,8 +505,8 @@ class TelegramMonitorBot:
 
         TWITTER_URL = os.getenv("TWITTER_URL")
         TWITTER_CHAT_ID = os.getenv("TWITTER_CHAT_ID")
-	
-        print("init")
+    
+        print(str(datetime.now()) + " init")
         self.debug = (
             (DEBUG is not None) and
             (DEBUG.lower() != "false"))
@@ -508,15 +517,15 @@ class TelegramMonitorBot:
             (ADMIN_EXEMPT.lower() != "false"))
 
         if (self.debug):
-            print("🔵 debug:", self.debug)
-            print("🔵 admin_exempt:", self.admin_exempt)
-            print("🔵 TELEGRAM_BOT_POSTGRES_URL:", TELEGRAM_BOT_POSTGRES_URL)
-            print("🔵 TELEGRAM_BOT_TOKEN:", TELEGRAM_BOT_TOKEN)
-            print("🔵 NOTIFY_CHAT:", NOTIFY_CHAT)
-            print("🔵 MESSAGE_BAN_PATTERNS:\n", MESSAGE_BAN_PATTERNS)
-            print("🔵 MESSAGE_HIDE_PATTERNS:\n", MESSAGE_HIDE_PATTERNS)
-            print("🔵 NAME_BAN_PATTERNS:\n", NAME_BAN_PATTERNS)
-            print("🔵 IGNORE_USER_IDS:\n", IGNORE_USER_IDS)
+            print(str(datetime.now()) + " 🔵 debug:", self.debug)
+            print(str(datetime.now()) + " 🔵 admin_exempt:", self.admin_exempt)
+            print(str(datetime.now()) + " 🔵 TELEGRAM_BOT_POSTGRES_URL:", TELEGRAM_BOT_POSTGRES_URL)
+            print(str(datetime.now()) + " 🔵 TELEGRAM_BOT_TOKEN:", TELEGRAM_BOT_TOKEN)
+            print(str(datetime.now()) + " 🔵 NOTIFY_CHAT:", NOTIFY_CHAT)
+            print(str(datetime.now()) + " 🔵 MESSAGE_BAN_PATTERNS:\n", MESSAGE_BAN_PATTERNS)
+            print(str(datetime.now()) + " 🔵 MESSAGE_HIDE_PATTERNS:\n", MESSAGE_HIDE_PATTERNS)
+            print(str(datetime.now()) + " 🔵 NAME_BAN_PATTERNS:\n", NAME_BAN_PATTERNS)
+            print(str(datetime.now()) + " 🔵 IGNORE_USER_IDS:\n", IGNORE_USER_IDS)
 
         # Channel to notify of violoations, e.g. "@channelname"
         self.notify_chat = NOTIFY_CHAT
@@ -532,7 +541,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "vote", "levelup", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "medium", "delmsg", "summary", "education", "dfx2", "adminlist", "help"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "arbrpc", "vote", "levelup", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "x", "medium", "delmsg", "summary", "education", "dfx2", "adminlist", "help"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -565,13 +574,13 @@ class TelegramMonitorBot:
 
     @MWT(timeout=60*60)
     def get_admin_ids(self, bot, chat_id):
-        print("get_admin_ids")
+        print(str(datetime.now()) + " get_admin_ids")
         """ Returns a list of admin IDs for a given chat. Results are cached for 1 hour. """
         return [admin.user.id for admin in bot.get_chat_administrators(chat_id)]
 
 
     def ban_user(self, update, reason):
-        print("ban_user")
+        print(str(datetime.now()) + " ban_user")
         """ Ban user """
         kick_success = update.message.chat.kick_member(update.message.from_user.id)
         s = session()
@@ -582,7 +591,7 @@ class TelegramMonitorBot:
         s.commit()
         s.close()
     def ban_user_from_id(self, bot, user_id, reason):
-        print("ban_user")
+        print(str(datetime.now()) + " ban_user")
         """ Ban user """
         kick_success = bot.ban_chat_member(CHAT_IDS, user_id, timeout=None, until_date=None, api_kwargs=None, revoke_messages=True)
         s = session()
@@ -594,9 +603,9 @@ class TelegramMonitorBot:
         s.close()
         
     def ban_user_from_message(self, bot, update, message, reason, deleteAll):
-        print("ban_user")
+        print(str(datetime.now()) + " ban_user")
         """ Ban user """
-        print("BAN COMMAND - DELETE ALL ", deleteAll)
+        print(str(datetime.now()) + " BAN COMMAND - DELETE ALL ", deleteAll)
         if message is not None:
             kick_success = bot.ban_chat_member(CHAT_IDS, message.from_user.id, timeout=None, until_date=None, api_kwargs=None, revoke_messages=deleteAll) 
             s = session()
@@ -607,23 +616,23 @@ class TelegramMonitorBot:
             s.commit()
             s.close()  
     def onjoin(self, update, context):
-        print("onjoin")
+        print(str(datetime.now()) + " onjoin")
         try:
             context.bot.delete_message(chat_id=update.message.chat_id,message_id=update.message.message_id)
-        except Exception as e: print('Error normal 322')
+        except Exception as e: print(str(datetime.now()) + ' Error normal 322')
         
     def onleft(self, update, context):
-        print("onleft")
+        print(str(datetime.now()) + " onleft")
         context.bot.delete_message(chat_id=update.message.chat_id,message_id=update.message.message_id)
         
     def greet_chat_members(self, update, context):
-        print("greet_chat_members")
+        print(str(datetime.now()) + " greet_chat_members")
         """Greets new users in chats and announces when someone leaves"""
         msg = update.effective_message
-        print("Msg", msg)
+        print(str(datetime.now()) + " Msg", msg)
         if update.effective_chat.id not in self.chat_ids:
             from_user = "UNKNOWN"
-            print("1 Message from user {} is from chat_id not being monitored: {}".format(
+            print(str(datetime.now()) + " 1 Message from user {} is from chat_id not being monitored: {}".format(
                 from_user,
                 update.effective_chat.id)
             )
@@ -644,7 +653,7 @@ class TelegramMonitorBot:
             s.close()
             captcha_config = s.query(MiscData).filter_by(key = "captcha").first().data
             welcome_config = s.query(MiscData).filter_by(key = "welcome_msg").first().data
-            print("New member!\nCaptcha: " + captcha_config + "\nWelcome Msg: " + welcome_config)
+            print(str(datetime.now()) + " New member!\nCaptcha: " + captcha_config + "\nWelcome Msg: " + welcome_config)
             user = update.chat_member.new_chat_member.user
             if not self.id_exists(user.id):
                 add_user_success = self.add_user(
@@ -654,9 +663,9 @@ class TelegramMonitorBot:
                     user.username,
                     0,0)
                 if add_user_success:
-                    print("User added: {}".format(user.id))
+                    print(str(datetime.now()) + " User added: {}".format(user.id))
                 else:
-                    print("Something went wrong adding the user {}".format(user.id), file=sys.stderr)
+                    print(str(datetime.now()) + " Something went wrong adding the user {}".format(user.id), file=sys.stderr)
             else:
                 s = session()
                 usuario = s.query(User).filter_by(id=user.id).first()  # gets the initial value     
@@ -719,17 +728,17 @@ class TelegramMonitorBot:
         
     def security_check_username(self, bot, update):
         """ Test username for security violations """
-        print("security_check_username")
+        print(str(datetime.now()) + " security_check_username")
         # Nothing by the moment
 
 
     def security_check_message(self, bot, update):
-        print("security_check_message")
+        print(str(datetime.now()) + " security_check_message")
         """ Test message for security violations """
 
 
     def attachment_check(self, bot, update):
-        print("attachment_check")
+        print(str(datetime.now()) + " attachment_check")
         """ Hide messages with attachments (except photo or video) """
         if update.message is not None:
             s = session()
@@ -741,9 +750,22 @@ class TelegramMonitorBot:
                 update.message.voice) and usuario.popularity == 0:
                 # Logging
                 mention_html = update.message.from_user.mention_html()
-                log_message = "❌ Message deleted. " + mention_html + " you are not authorized to post audios, documents, links, games or voice messages. You need to level up by joining in the conversation more."
-                delete_message_by_type(bot, "not-authorized", CHAT_IDS)
+                userAddWarn = s.query(User).filter(User.id==update.message.from_user.id).first()  
                 tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized", parse_mode=ParseMode.HTML)
+                if userAddWarn is None:
+                        print(str(datetime.now()) + " ERROR BRUTAL 67")
+                else:         
+                    print(str(datetime.now()) + " 3.- User warnings: " + str(userAddWarn.warnings) + " and warns for ban: " + str(warnings_for_ban)) 
+                    if userAddWarn.warnings >= (warnings_for_ban-1):
+                        self.hard_ban_command(bot, update, update.message.chat_id, False, '', user_id=update.message.from_user.id)
+                    else:                  
+                        userAddWarn.warnings = userAddWarn.warnings + 1
+                        s.merge(userAddWarn)
+                        s.commit()
+                        log_message_send = "❌ Message deleted (Warning " + str(userAddWarn.warnings) + "/" + str(warnings_for_ban+1) + ")." + mention_html + " you are not authorized to post audios, documents, links, games or voice messages. You need to level up by joining in the conversation more."
+                        delete_message_by_type(bot, "not-authorized", CHAT_IDS)
+                        print(log_message_send)
+                        tlg_send_message(bot, CHAT_IDS, log_message_send, type="not-authorized", parse_mode=ParseMode.HTML)
                 print(log_message)
                 # Delete the message
                 update.message.delete()
@@ -756,7 +778,7 @@ class TelegramMonitorBot:
             s.close()
 
     def banCaptcha(self, bot, message, usuario, from_user):
-        tlg_send_message(bot, message.chat_id, "You have been banned for failing 50 attempts. If you think it is an error write to @danicryptonews", type=None, parse_mode=ParseMode.HTML)
+        tlg_send_message(bot, message.chat_id, "You have been banned for failing 5 attempts. If you think it is an error write to @danicryptonews", type=None, parse_mode=ParseMode.HTML)
         s = session()
         checkban = s.query(UserBan).filter_by(UserBan.user_id==usuario.id).all()
         if checkban is not None:
@@ -767,17 +789,17 @@ class TelegramMonitorBot:
         s.add(userBan)
         s.commit()
         s.close()
-        print("USER", usuario.username, "FAILED THE CAPTCHA. BANNED.")
+        print(str(datetime.now()) + " USER", usuario.username, "FAILED THE CAPTCHA. BANNED.")
         # Removed banning command
         # bot.kick_chat_member(chat_id=CHAT_IDS, user_id=from_user) 
         try:
             bot.deleteMessage(message_id = usuario.captcha_message, chat_id = CHAT_IDS)
         except Exception as e:
-            print("[001] Error but not a problem")
+            print(str(datetime.now()) + " [001] Error but not a problem")
             
             
     def logger(self, update: Update, context: CallbackContext):
-        print("logger")
+        print(str(datetime.now()) + " logger")
         bot = context.bot
         """ Primary Logger. Handles incoming bot messages and saves them to DB
 
@@ -789,7 +811,7 @@ class TelegramMonitorBot:
             update.effective_user is None
             or update.effective_user.id in self.ignore_user_ids
         ):
-            print("{}: Ignoring update.".format(update.update_id))
+            print(str(datetime.now()) + " {}: Ignoring update.".format(update.update_id))
             return
 
         try:          
@@ -799,7 +821,7 @@ class TelegramMonitorBot:
             if message is None:
 
                 if update.effective_message is None:
-                    print("No message included in update")
+                    print(str(datetime.now()) + " No message included in update")
                     return
 
                 message = update.effective_message
@@ -833,7 +855,7 @@ class TelegramMonitorBot:
                             try:
                                 os.remove('ban_list_export.xlsx')
                             except Exception:
-                                print("[003] Error deleting report file")
+                                print(str(datetime.now()) + " [003] Error deleting report file")
                             workbook = xlsxwriter.Workbook('ban_list_export.xlsx')
                             worksheet = workbook.add_worksheet()
                             worksheet.write('A1', 'User ID')
@@ -880,15 +902,15 @@ class TelegramMonitorBot:
                                 )
                                 context.bot.restrict_chat_member(CHAT_IDS, from_user, permissions) 
                                 tlg_send_message(bot, message.chat_id, "✅ CAPTCHA solved, welcome to the DFX Finance community! Take a look at the pinned posts or visit docs.dfx.finance for more info.", type=None, parse_mode=ParseMode.HTML)
-                                print("USER", usuario.first_name, usuario.username, "PASSED THE CAPTCHA")
+                                print(str(datetime.now()) + " USER", usuario.first_name, usuario.username, "PASSED THE CAPTCHA")
                                 try:
                                     bot.deleteMessage(message_id = usuario.captcha_message, chat_id = CHAT_IDS)
                                 except Exception as e:
-                                    print("[001] Error but not a problem")
+                                    print(str(datetime.now()) + " [001] Error but not a problem")
                             elif message.text == "/start" and captchaModel is None:
                                 captcha = create_image_captcha(message.chat_id, usuario.id, 1)       
                                 captcha_code = captcha["characters"]
-                                print("USER", usuario.first_name, usuario.username, "STARTED THE CAPTCHA")
+                                print(str(datetime.now()) + " USER", usuario.first_name, usuario.username, "STARTED THE CAPTCHA")
                                 captchaModel = Captcha(
                                     id=None,
                                     user_id=usuario.id,
@@ -906,7 +928,7 @@ class TelegramMonitorBot:
                                 captchaModel.solution=captcha_code
                                 s.merge(captchaModel)
                                 s.commit()
-                                print("USER", usuario.username, "FAILED ONE CAPTCHA ATTEMPT")
+                                print(str(datetime.now()) + " USER", usuario.username, "FAILED ONE CAPTCHA ATTEMPT")
                                 intentos = captchaModel.attemps
                                 if intentos == 0:
                                     self.banCaptcha(bot, message, usuario, from_user)
@@ -919,7 +941,7 @@ class TelegramMonitorBot:
                                 s.merge(captchaModel)
                                 s.commit()
                                 intentos = captchaModel.attemps
-                                print("USER", usuario.username, "FAILED ONE CAPTCHA ATTEMPT")
+                                print(str(datetime.now()) + " USER", usuario.username, "FAILED ONE CAPTCHA ATTEMPT")
                                 if intentos == 0:
                                     self.banCaptcha(bot, message, usuario, from_user)
                                     return
@@ -927,7 +949,7 @@ class TelegramMonitorBot:
                         elif usuario.verified == 1:
                             tlg_send_message(bot, message.chat_id, "You have already completed the CAPTCHA, nothing more to see here", type=None, parse_mode=ParseMode.HTML)                     
                         elif usuario is None:
-                            print("3 Message from user {} is from chat_id not being monitored: {}".format(
+                            print(str(datetime.now()) + " 3 Message from user {} is from chat_id not being monitored: {}".format(
                                 from_user,
                                 message.chat_id)
                             )
@@ -949,9 +971,9 @@ class TelegramMonitorBot:
                     if add_user_success:
                         self.log_message(
                             user.id, message.text, message.chat_id, message.message_id, None)
-                        print("User added: {}".format(user.id))
+                        print(str(datetime.now()) + " User added: {}".format(user.id))
                     else:
-                        print("Something went wrong adding the user {}".format(user.id), file=sys.stderr)
+                        print(str(datetime.now()) + " Something went wrong adding the user {}".format(user.id), file=sys.stderr)
 
                 user_name = (
                     user.username or
@@ -960,28 +982,40 @@ class TelegramMonitorBot:
                 if message.text is not None and ('vpn' in message.text.lower() and message.from_user.id not in self.get_admin_ids(bot, message.chat_id)):
                     mention_html = message.from_user.mention_html()
                     bot.deleteMessage(message_id = message.message_id, chat_id = message.chat_id)
-                    log_message = "❌ Message deleted. Sorry " + mention_html + " but talking about VPN services is not allowed. If you think it's an error, contact any admin to recover your message. You can check the list of admins using the /adminlist command."
+                    userAddWarn = s.query(User).filter(User.id==message.from_user.id).first()  
+                    if userAddWarn is None:
+                        print(str(datetime.now()) + " ERROR BRUTAL 96")
+                    else:    
+                        print(str(datetime.now()) + " 2. User warnings: " + str(userAddWarn.warnings) + " and warns for ban: " + str(warnings_for_ban)) 
+                        if userAddWarn.warnings >= (warnings_for_ban-1):
+                            self.hard_ban_command(bot, update, message.chat_id, False, '', user_id=message.from_user.id)
+                        else:                  
+                            userAddWarn.warnings = userAddWarn.warnings + 1
+                            s.merge(userAddWarn)
+                            s.commit()
+                            log_message = "❌ Message deleted (Warning " + str(userAddWarn.warnings) + "/" + str(warnings_for_ban+1) + "). Sorry " + mention_html + " but talking about VPN services is not allowed. If you think it's an error, contact any admin to recover your message. You can check the list of admins using the /adminlist command."
+                            tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized", parse_mode=ParseMode.HTML)  
                     delete_message_by_type(bot, "not-authorized", CHAT_IDS)
-                    tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized", parse_mode=ParseMode.HTML)
+                                                                    
                 if message.text:
                     mention_html = message.from_user.mention_html()
                     self.add_count_messages(user.id, bot, message.chat_id, mention_html)
                     self.handleMessagesReplies(message)
-                    print("{} {} ({}) : {}".format(
+                    print(str(datetime.now()) + " {} {} ({}) : {}".format(
                         strftime("%Y-%m-%dT%H:%M:%S"),
                         user.id,
                         user_name,
                         message.text.encode("utf-8"))
                     )
                 else:
-                    print("{} {} ({}) : non-message".format(
+                    print(str(datetime.now()) + " {} {} ({}) : non-message".format(
                         strftime("%Y-%m-%dT%H:%M:%S"),
                         user.id,
                         user_name)
                     )
 
             else:
-                print("Update and user not logged because no message was found")
+                print(str(datetime.now()) + " Update and user not logged because no message was found")
 
             # Don"t check admin activity
             is_admin = False
@@ -989,7 +1023,7 @@ class TelegramMonitorBot:
                 is_admin = message.from_user.id in self.get_admin_ids(bot, message.chat_id)
 
             if is_admin and self.admin_exempt:
-                print("👮‍♂️ Skipping checks. User is admin: {}".format(user.id))
+                print(str(datetime.now()) + " 👮‍♂️ Skipping checks. User is admin: {}".format(user.id))
             else:
                 # Security checks
                 self.attachment_check(bot, update)
@@ -999,7 +1033,7 @@ class TelegramMonitorBot:
             if message.text == "+1" and message.reply_to_message.from_user is not None:
                 checkAlreadyVoted = s.query(UserReputation).filter(UserReputation.message_id==message.reply_to_message.message_id, UserReputation.voter_id==message.from_user.id).all()
                 if message.reply_to_message.from_user.id == message.from_user.id:
-                    print("Cant vote your own message lol")
+                    print(str(datetime.now()) + " Cant vote your own message lol")
                 elif checkAlreadyVoted is None or not checkAlreadyVoted:
                     userReputation = UserReputation(
                         owner_id=message.reply_to_message.from_user.id,
@@ -1022,23 +1056,23 @@ class TelegramMonitorBot:
                     try:
                         tlg_send_message(bot, message.reply_to_message.from_user.id, "⭐️ You have been upvoted by " + str(message.from_user.first_name or '') + " " + str(message.from_user.last_name or '') + " " + str(username or '') + "\n\n✉️ Message link: https://t.me/DFX_Finance/" + str(message.reply_to_message.message_id), type=None, parse_mode=ParseMode.HTML)
                     except TelegramError:
-                        print("User disabled voting notifications")
-                    print("New vote from", message.from_user.first_name, message.from_user.last_name, "to", userAddRep.first_name, userAddRep.last_name)
+                        print(str(datetime.now()) + " User disabled voting notifications")
+                    print(str(datetime.now()) + " New vote from", message.from_user.first_name, message.from_user.last_name, "to", userAddRep.first_name, userAddRep.last_name)
                 else:
-                    print("User already voted to that message")
+                    print(str(datetime.now()) + " User already voted to that message")
                 bot.deleteMessage(message_id = message.message_id, chat_id = message.chat_id)
             s.close()
         except Exception as e:
             s.close()
-            print("Error[521]: {}".format(e))
+            print(str(datetime.now()) + " Error[521]: {}".format(e))
             print(traceback.format_exc())
-            print("Error on line {}".format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+            print(str(datetime.now()) + " Error on line {}".format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
         
     def handleMessagesReplies(self, message):
         ## Random stuff 1 out of 30 chances
         #chance = random.randint(0,30)
         #reply = random.randint(0,(len(funny_crazy_things)+1))
-        #print("El chance es:", chance)
+        #print(str(datetime.now()) + " El chance es:", chance)
         #if chance == 15:
         #    message.reply_text(funny_crazy_things[reply])
         #    return
@@ -1064,31 +1098,47 @@ class TelegramMonitorBot:
             message.reply_text("DYOR stands for *D*FX *Y*our *O*nly *R*etirement (plan)", parse_mode="Markdown")    
             
     def link_checks(self, bot, update):
-        print("link_checks")
+        print(str(datetime.now()) + " link_checks")
         s = session()
         url = False
         if update.message is not None:
             try:
-	            if len(extractor.find_urls(str(update.message.text))) > 0:
-	                url = True
-	            usuario = s.query(User).filter_by(id=update.message.from_user.id).first()
-	            if usuario.popularity == 0 and url == True:
-	                mention_html = update.message.from_user.mention_html()
-	                log_message = "❌ Message deleted. " + mention_html + " you are not authorized to post audios, documents, links, games or voice messages. Level up to remove these restrictions."
-	                delete_message_by_type(bot, "not-authorized", CHAT_IDS)
-	                tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized", parse_mode=ParseMode.HTML)
-	                update.message.delete()
-	                messageHide = MessageHide(
-	                    user_id=update.message.from_user.id,
-	                    message=update.message.text)
-	                s.add(messageHide)
-	                s.commit()
-            except: pass	          
+                if len(extractor.find_urls(str(update.message.text))) > 0:
+                    print(str(datetime.now()) + " URL FOUND ON MESSAGE FOR ID: " + str(update.message.from_user.id))
+                    usuario = s.query(User).filter_by(id=update.message.from_user.id).first()
+                    print(str(datetime.now()) + " Popularity is: " + str(usuario.popularity))
+                    if usuario.popularity == 0:
+                        mention_html = update.message.from_user.mention_html()
+                        userAddWarn = s.query(User).filter_by(id=update.message.from_user.id).first()  
+                        delete_message_by_type(bot, "not-authorized", CHAT_IDS)
+                        update.message.delete()
+                        messageHide = MessageHide(
+                            user_id=update.message.from_user.id,
+                            message=update.message.text)
+                        s.add(messageHide)
+                        s.commit()
+                        if userAddWarn is None:
+                            print(str(datetime.now()) + " ERROR BRUTAL 23")
+                        else: 
+                            print(str(datetime.now()) + " 1.- User warnings: " + str(userAddWarn.warnings) + " and warns for ban: " + str(warnings_for_ban))    
+                            if userAddWarn.warnings >= (warnings_for_ban-1):
+                                print(str(datetime.now()) + " Going to ban user id: " + str(update.message.from_user.id))
+                                self.hard_ban_command(bot, update, update.message.chat_id, False, '', user_id=update.message.from_user.id)
+                            else:                  
+                                userAddWarn.warnings = userAddWarn.warnings + 1
+                                s.merge(userAddWarn)
+                                s.commit()
+                                log_message = "❌ Message deleted (Warning " + str(userAddWarn.warnings) + "/" + str(warnings_for_ban) + "). " + mention_html + " you are not authorized to post audios, documents, links, games or voice messages. Level up to remove these restrictions."
+                                print(log_message)
+                                tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized", parse_mode=ParseMode.HTML)
+            except Exception as e:
+                traceback.print_stack()
+                pass              
         s.close()
         
     # DB queries
     def id_exists(self, id_value):
-        print("id_exists")
+        print(str(datetime.now()) + " id_exists")
         s = session()
         bool_set = False
         for id1 in s.query(User.id).filter_by(id=id_value):
@@ -1099,7 +1149,7 @@ class TelegramMonitorBot:
         return bool_set
 
     def log_message(self, user_id, user_message, chat_id, message_id, last_edit):
-        print("log_message")
+        print(str(datetime.now()) + " log_message")
         s = session()
         if user_message is None:
             user_message = "[NO MESSAGE]"
@@ -1122,7 +1172,7 @@ class TelegramMonitorBot:
                     s.merge(msg1)
                     s.commit()     
         except Exception as e:
-            print("Error logging message: {}".format(e))
+            print(str(datetime.now()) + " Error logging message: {}".format(e))
             print(traceback.format_exc())
             s.close()
         s.close()
@@ -1145,7 +1195,7 @@ class TelegramMonitorBot:
             s.close()
                 
     def add_user(self, user_id, first_name, last_name, username, verified, captcha_message):
-        print("add_user")
+        print(str(datetime.now()) + " add_user")
         try:
             s = session()
             user = User(
@@ -1158,19 +1208,20 @@ class TelegramMonitorBot:
                 reputation=0,
                 join_datetime=func.now(),
                 verified=verified,
-                captcha_message=captcha_message
+                captcha_message=captcha_message,
+                warnings=0
                 )
             s.add(user)
             s.commit()
             s.close()
             return self.id_exists(user_id)
         except Exception as e:
-            print("Error[347]: {}".format(e))
+            print(str(datetime.now()) + " Error[347]: {}".format(e))
             print(traceback.format_exc())
 
             
     def handle_command(self, update: Update, context: CallbackContext):
-        print("handle_command")
+        print(str(datetime.now()) + " handle_command")
         bot = context.bot
         
         chat_id = None
@@ -1195,15 +1246,15 @@ class TelegramMonitorBot:
             chat_id = update.effective_message.chat.id
         if chat_id not in self.chat_ids:
             from_user = "UNKNOWN"
-            print("2 Message from user {} is from chat_id not being monitored: {}".format(
+            print(str(datetime.now()) + " 2 Message from user {} is from chat_id not being monitored: {}".format(
                 from_user,
                 chat_id)
             )
             return
-        print("command: {} seen in chat_id {}".format(command, chat_id))
+        print(str(datetime.now()) + " command: {} seen in chat_id {}".format(command, chat_id))
         if BOT_ALIAS in command:
             command = command.replace("@" + BOT_ALIAS, "")
-        if command != None and command not in ["/contract", "/website", "/twitter", "/medium", "/summary", "/education", "/dfx2", "/adminlist", "/help"]:
+        if command != None and command not in ["/contract", "/website", "/twitter", "/x", "/maticrpc", "/arbrpc", "/medium", "/summary", "/education", "/dfx2", "/adminlist", "/help"]:
             bot.deleteMessage(message_id = update.message.message_id, chat_id = chat_id)
         if command == "/dragon":
             n = random.randint(1,59)
@@ -1260,7 +1311,7 @@ class TelegramMonitorBot:
             admins_to_exclude = []
             for admin in admins:
                 admins_to_exclude.append(admin.user.id)
-            print("Group admins", admins_to_exclude)
+            print(str(datetime.now()) + " Group admins", admins_to_exclude)
             top10users = s.query(User).filter(User.id.notin_(admins_to_exclude)).order_by(User.popularity.desc(), User.reputation.desc(), User.message_count.desc()).limit(10).all()
             textTop10 = "<b>🏆 TOP 10 USERS BY LEVEL 🏆</b>\n\n"
             arrayNumberEmojis = "4️⃣_5️⃣_6️⃣_7️⃣_8️⃣_9️⃣_🔟"
@@ -1302,6 +1353,11 @@ class TelegramMonitorBot:
             delete_message_by_type(bot, "image-guide", chat_id)
             caption = "The picture below shows the Remote Procedure Call (RPC) info that you can add to your MetaMask wallet in order to operate on the Polygon (MATIC) blockchain.\n\nIf you would like to verify the information above, you can do so right here ->\nhttps://docs.polygon.technology/docs/develop/network-details/network/"
             tlg_send_image(bot, chat_id, open(image, 'rb'), "image-guide", caption=caption)
+        if command == "/arbrpc":
+            image = "guides/arbrpc.jpg"
+            delete_message_by_type(bot, "image-guide", chat_id)
+            caption = "The picture below shows the Remote Procedure Call (RPC) info that you can add to your MetaMask wallet in order to operate on the Arbitrum (ARB) blockchain.\n\nIf you would like to verify the information above, you can do so right here ->\nhttps://docs.arbitrum.io/node-running/node-providers#rpc-endpoints"
+            tlg_send_image(bot, chat_id, open(image, 'rb'), "image-guide", caption=caption)
         if command == "/vote":
             image = "guides/vote.jpg"
             delete_message_by_type(bot, "image-guide", chat_id)
@@ -1333,23 +1389,23 @@ class TelegramMonitorBot:
                 s.commit()       
         if command == "/contract":
             delete_message_by_type(bot, "contract", chat_id)
-            tlg_reply_message(message, "<b><u>DFX Contract Addresses:</u></b>\n<b>Polygon</b>\n<code>0xE7804D91dfCDE7F776c90043E03eAa6Df87E6395</code>\n<b>Ethereum</b>\n<code>0x888888435FDe8e7d4c54cAb67f206e4199454c60</code>", "contract")
+            tlg_reply_message(message, "<b><u>DFX Contract Addresses:</u></b>\n<b>Polygon:</b>\n<code>0xE7804D91dfCDE7F776c90043E03eAa6Df87E6395</code>\n<b>Ethereum:</b>\n<code>0x888888435FDe8e7d4c54cAb67f206e4199454c60</code>\n<b>Arbitrum:</b>\n<code>0xA4914B824eF261D4ED0Ccecec29500862d57c0a1</code>", "contract")
         if command == "/website":
             delete_message_by_type(bot, "website", chat_id)
-            tlg_reply_message(message, "http://dfx.finance/", "website")
+            tlg_reply_message(message, "Official Website: http://dfx.finance/", "website")
         if command == "/help":
             delete_message_by_type(bot, "help", chat_id)
-            help_text = "<b><u>These are the commands available on this group:\n\nInfo on DFX Finance:\n</u></b>- /website → Displays the DFX Website link\n- /twitter → Displays the Twitter link\n- /medium → Displays the Medium link\n- /summary → Displays a summary of DFX\n- /education → Displays links to learn more about DFX Finance\n- /price → Display the current price\n- /supply → Displays the current supply\n- /vote → Post the voting tutorial\n- /contract → Displays the contract addresses\n- /dfx2 → Displays info about DFX 2.0\n\n<b><u>Images</u></b>:\n- /gm → Post a good morning image\n- /dragon → Post a random dragon image\n- /kevin → Post Kevin&#x27;s image\n- /adrian → Post Adrian&#x27;s image\n- /coty → Post Coty&#x27;s image\n- /jim → Post Jim&#x27;s image\n- /hopium → Post a random hopium image\n- /whalechart → Post the whale chart\n\n<b><u>Group Info &amp; Others:\n</u></b>- /maticrpc → Post the Matic RPC configuration\n- /top10level → Displays the top 10 contributors of the group\n- /mylevel → Shows your level to the group\n- /adminlist → Displays the admin list of the group\n- /help → Displays this message\n\n✍️ Reply with +1 to the messages that <b>you consider valuable</b> to contribute to this system.\n\n🔔 <b>Start a conversation with me (bot) privately</b> if you want to get updated when someone adds reputation (+1) to you."
+            help_text = "<b><u>These are the commands available on this group:\n\nInfo on DFX Finance:\n</u></b>- /website → Displays the DFX Website link\n- /twitter or /x → Displays the Twitter link\n- /medium → Displays the Medium link\n- /summary → Displays a summary of DFX\n- /education → Displays links to learn more about DFX Finance\n- /price → Display the current price\n- /supply → Displays the current supply\n- /vote → Post the voting tutorial\n- /contract → Displays the contract addresses\n- /dfx2 → Displays info about DFX 2.0\n\n<b><u>Images</u></b>:\n- /gm → Post a good morning image\n- /dragon → Post a random dragon image\n- /kevin → Post Kevin&#x27;s image\n- /adrian → Post Adrian&#x27;s image\n- /coty → Post Coty&#x27;s image\n- /jim → Post Jim&#x27;s image\n- /hopium → Post a random hopium image\n- /whalechart → Post the whale chart\n\n<b><u>Group Info &amp; Others:\n</u></b>- /maticrpc → Post the Matic RPC configuration\n- /arbrpc → Post the Arbitrum RPC configuration\n- /top10level → Displays the top 10 contributors of the group\n- /mylevel → Shows your level to the group\n- /adminlist → Displays the admin list of the group\n- /help → Displays this message\n\n✍️ Reply with +1 to the messages that <b>you consider valuable</b> to contribute to this system.\n\n🔔 <b>Start a conversation with me (bot) privately</b> if you want to get updated when someone adds reputation (+1) to you."
             tlg_reply_message(message, help_text, "help")
         if command == "/adminlist":
             delete_message_by_type(bot, "admin-list", chat_id)
             tlg_reply_message(message, "<b><u>DFX Finance Admins list:\n</u></b>- @CotyKuhn \n- @naisechef \n- @robeyryan \n- @danicryptonews \n- @snappycappy\n- @Negitaro\n- @bigbossmanf\n- @AJ_DeFi \n- @Andrew_Pinch \n- @scottdoughty\n- @TheBigSur", "admin-list")
-        if command == "/twitter":
+        if command == "/twitter" or command == "/x":
             delete_message_by_type(bot, "twitter", chat_id)
-            tlg_reply_message(message, "https://twitter.com/DFXFinance", "twitter")
+            tlg_reply_message(message, "Official Account: https://twitter.com/DFXFinance", "twitter")
         if command == "/medium":
             delete_message_by_type(bot, "medium", chat_id)
-            tlg_reply_message(message, "https://medium.com/@dfxfinance/", "medium")
+            tlg_reply_message(message, "Official Account: https://medium.com/@dfxfinance/", "medium")
         if command == "/education":
             education_text = "<b>*** DFX Education Zone ***\n\n</b>Here are some posts to educate yourself on DFX, the DAO and some features of the platform\n\n<b>DFX Summary:</b> https://t.me/DFX_Finance/54550\n<b>DFX Complete Guide:</b> https://blocmates.com/blogmates/what-is-dfx-finance-a-complete-guide/\n\n<b>Proposals &amp; DAO Voting Process:</b> https://t.me/DFX_Finance/56321\n\n<b>veDFX Infographic: </b>https://t.me/DFX_Finance/59640\n<b>veDFX rewards boost explained:</b> https://t.me/DFX_Finance/54903\n<b>veDFX voting explained:</b> https://t.me/DFX_Finance/54692\n\n<b>How to maximise earnings:</b> https://t.me/DFX_Finance/47143\n\n<b>DFX v2.0 summary:</b> https://t.me/DFX_Finance/43205\n\n<b>DFX v2.0 - add a new pool &amp; incentivise it: </b>https://t.me/DFX_Finance/58755\n\n<b>Voting Going Forwards (community, snapshot, guage)</b> - https://t.me/DFX_Finance/58891"
             delete_message_by_type(bot, "education", chat_id)
@@ -1359,7 +1415,7 @@ class TelegramMonitorBot:
             delete_message_by_type(bot, "dfx2", chat_id)
             tlg_reply_message(message, dfx2_text, "dfx2")
         if command == "/summary":
-            summary_text = "<b>*** DFX Summary ***\n</b>Forex (FX) Decentralized Exchange specializing in Non-USD Stablecoins that are backed 1:1 with their fiat equivalent. Current Non-USD Stablecoin offerings include:\nCADC 🇨🇦 , EUROC &amp; EURS🇪🇺, XSGD 🇸🇬, GYEN 🇯🇵, NZDS 🇳🇿, XIDR 🇮🇩, TRYB 🇹🇷 all paired with  USDC 🇺🇸\n\nallowing users of the platform to swap one stablecoin for another at the cost of a low fee (a regular bank charges 2% upwards to swap currencies, so DFX is up to 40x cheaper than a bank)\n\n<b>How does this work?:\n</b>- liquidity providers provide liquidity to the stablcoin pools by staking a pair of stablecoin tokens on \nhttps://app.dfx.finance/pools\n- users of the platform exchange one stablecoin for another and as part of the transaction a 0.05% swap fee is taken\n- liquidity providers receive swap fees (added back to the pool on every swap), and incentives from DFX in the form of DFX tokens (claimable at your convenience) resulting in an avg APR between 8%-46% (depending on the pool you provide liquidity too).\n- DFX tokens can then be locked into veDFX to give a boost in the APR received from their liquidity pool investment up to 2.5x\n- DFX tokens can also be used to vote on proposals within the DAO giving the community the ability to steer the direction of the protocol.\n\n<b>Upcoming Features\n</b>- veDFX: lock up your DFX for voting power on Liquidity Pool rewards allocation and a APR boost up to 2.5x\n- DFX2.0: any token can propose to list on DFX (including commodities such as Gold, Oil etc.) if they hold enough veDFX and pass the DFX snapshot DAO vote\n- Bribes: those holding DFX can be bribed to vote on snapshot proposal via hiddenhand\n- Lending/Borrowing: extending the Loan/Borrow ability on Euler from currently just CADC to all stablecoins on the platform\n\n<b>Partnerships\n</b>- Circle: close partner and also provider of the USDC and EUROC stablecoins\n- Insure DAO: to insure the liquidity pools if hacked\n- Bluejay Finance: specialises in non-usd stablecoin on/off ramps to fiat\n- Chainlink: provide the oracle to ensure super efficient prices match to real world exchange rates\n\n<b>Where to get DFX?\n</b>CEXes: Huobi, MEXC, CoinDCX and BitKan\nDEXes: 1inch, Balancer, Sushiswap dexes, TELcoin app\n\n<b>More Info\n</b>docs.dfx.finance"
+            summary_text = "<b>*** DFX Summary ***</b>\n\nForex (<i>FX</i>) Decentralized Exchange specializing in non-USD Stablecoins that are backed 1:1 with their fiat equivalent.\n\n<u>Current Non-USD Stablecoin offerings include</u>:\nCADC 🇨🇦, EUROC & EURS 🇪🇺, XSGD 🇸🇬, GYEN 🇯🇵, NGNC 🇳🇷🇦, NZDS 🇳🇿, XIDR 🇮🇩, TRYB 🇹🇷 all paired with USDC 🇺🇸\n\nallowing users of the platform to swap one stablecoin for another at the cost of a low fee (a regular bank charges 2% upwards to swap currencies, so DFX is up to 40x cheaper than a bank)\n\n<u>How does this work?</u>\n- Liquidity providers (<i>LP</i>) provide liquidity to the stablecoin pools by staking their pair of choice on <a href='https://exchange.dfx.finance/pools'>https://exchange.dfx.finance/pools</a> .\n- Users of the platform exchange one stablecoin for another and as part of the transaction, a 0.05% swap fee is taken.\n- Liquidity providers receive swap fees (<i>added back to the pool on every swap</i>), and incentives from DFX in the form of DFX tokens (<i>claimable at your convenience</i>) resulting in an avg APR between 4% - 85% (<i>depending on the pool you provide liquidity too</i>).\n- DFX tokens can then be locked into veDFX to give a boost to the APR received from their liquidity pool investment of up to 2.5x.\n- Locked DFX tokens (<i>veDFX</i>) can also be used to vote on proposals within the DAO giving the community the ability to steer the direction of the protocol.\n\n<u>Upcoming Features</u>:\n- DFX2.5: This feature will all the DFX AMM to be used with non-USDC pairings. Meaning, you can create any liquidity pool you would like and vote to have it put on the gauge to receive DFX rewards. (<i>This is currently under final audit review</i>)\n- Bribes: Those holding veDFX can be bribed to vote on snapshot proposals via Hiddenhand. (<i>Pending start date from Redacted</i>)\n- Gauges: Currently working with Chainlinks CCIP (<i>Cross-Chain Interoperability Protocol</i>) to start having the gauges deployed to Polygon and Arbitrum. Meaning, the APRs for those two blockchains will no longer be static. (<i>No timeline. However, it’s at the top of the list</i>)\n\n<u>Partnerships</u>:\n- Circle: Close partner and Issuer of the USDC and EUROC stablecoins.\n- Paytrie: Close partner and Issuer of the Canadian Dollar stablecoin (<i>CADC</i>).\n- Insure DAO: Insurance for liquidity pools.\n- Bluejay Finance: Specializes in non-USD stablecoin on/off ramps to fiat.\n- Chainlink: On-chain Oracle network to ensure super-efficient prices match real world exchange rates.\n- DIA: On-chain Oracle network for L1 & L2’s.\n- Stasis: Issuer of the European stablecoin (<i>EURS</i>).\n- Link: Issuer of the Nigerian stablecoin (<i>NGNC</i>).\n- PoundToken: Issuer of the British pound stablecoin (<i>GBPT</i>).\n- GMO-Z: Issuer of the Japanese Yen stablecoin (<i>GYEN</i>).\n- Techemynt: Issuer of the New Zealand stablecoin (<i>NZDS</i>).\n- Bilira: Issuer of the Turkish Lira stablecoin (<i>TRYB</i>).\n- StraitsX: Issuer of XSGD & XIDR (<i>Singaporean Dollar & Indonesian Rupiah</i>).\n\n<u>Where to get DFX?</u>\nCentralized Exchanges: Huobi, CoinDCX\nDecentralized Exchanges: 1inch, Balancer, SushiSwap, Telcoin App\n\n<u>Additional Information</u>:\n<a href='https://docs.dfx.finance/'>https://docs.dfx.finance/</a>\n"
             delete_message_by_type(bot, "summary", chat_id)
             tlg_reply_message(message, summary_text, "summary")
         if command == "/delmsg":
@@ -1371,7 +1427,7 @@ class TelegramMonitorBot:
                     elif message_text.isdecimal():
                         bot.delete_message(chat_id=chat_id, message_id=message_text)
                 except:
-                    print("Message to delete not found")
+                    print(str(datetime.now()) + " Message to delete not found")
         s.close()
         
     def ban_command(self, bot, update, chat_id, silent, command):
@@ -1379,9 +1435,9 @@ class TelegramMonitorBot:
         text = update.message.text.replace(command, '')
         s = session()
         user_id = self.get_user_id(text, update, s)
-        print("Going to ban user_id", user_id)
+        print(str(datetime.now()) + " Going to ban user_id", user_id)
         if user_id == '' or user_id is None:
-            print("FAILED TO BAN USER: NOT FOUND")
+            print(str(datetime.now()) + " FAILED TO BAN USER: NOT FOUND")
         else:
             userdb = s.query(User).filter(User.id==user_id).first()
             if userdb is not None:
@@ -1398,17 +1454,20 @@ class TelegramMonitorBot:
             self.ban_user_from_id(bot, user_id, reason=reason)
         s.close()
                 
-    def hard_ban_command(self, bot, update, chat_id, silent, command):
+    def hard_ban_command(self, bot, update, chat_id, silent, command, user_id=None):
         # Es admin, continúo
+        print(str(datetime.now()) + " hard_ban_command")
         text = update.message.text.replace(command, '')
         s = session()
-        user_id = self.get_user_id(text, update, s)
-        print("Going to ban user_id", user_id)
+        if user_id is None:
+            user_id = self.get_user_id(text, update, s)
+        print(str(datetime.now()) + " Going to ban user_id", user_id)
         if user_id == '' or user_id is None:
-            print("FAILED TO BAN USER: NOT FOUND")
+            print(str(datetime.now()) + " FAILED TO BAN USER: NOT FOUND")
         else:            
             userdb = s.query(User).filter(User.id==user_id).first()
             if userdb is not None:
+                print(str(datetime.now()) + " User found on database")
                 complete_name = ''
                 if userdb.first_name is not None:
                     complete_name = complete_name + userdb.first_name
@@ -1417,7 +1476,12 @@ class TelegramMonitorBot:
                 mention = "<a href='tg://user?id=" + str(user_id) + "'>" + complete_name + "</a>"
                 if silent == False:
                     tlg_send_message(bot, CHAT_IDS, "⛔️ User " + mention + " has been banned", "banned-from-command", parse_mode=ParseMode.HTML)
-            reason = "Banned by admin " + update.message.from_user.username
+            print(str(datetime.now()) + " Ban step success")
+            if update.message.from_user.username is not None:
+                reason = "Banned by admin " + str(update.message.from_user.username)
+            else:
+                reason = "Banned by bot"
+            print(str(datetime.now()) + " Ban reason: " + reason)
             self.ban_user_from_id(bot, user_id, reason=reason)
             self.delete_messages_from_id(bot, user_id)
         s.close()
@@ -1427,49 +1491,54 @@ class TelegramMonitorBot:
         text = update.message.text.replace(command, '')
         s = session()
         user_id = self.get_user_id(text, update, s)
-        print("Going to unban user_id", user_id)
+        if user_id is None:
+            try:
+                user_id = int(text)
+            except:
+                user_id = None
+        print(str(datetime.now()) + " Going to unban user_id", user_id)
         if user_id == '' or user_id is None:
-            print("FAILED TO UNBAN USER: NOT FOUND")
+            print(str(datetime.now()) + " FAILED TO UNBAN USER: NOT FOUND")
         else:
             bot.unban_chat_member(chat_id, user_id, only_if_banned=True)
             s.query(UserBan).filter(UserBan.user_id==user_id).delete()
             user_unban = s.query(User).filter(User.id==user_id).first()     
             if user_unban is None:
-                print("FAILED TO UNBAN USER: NOT FOUND")
-            else:
-                user_unban.verified = 1
-                s.merge(user_unban)
-                s.commit()
-                permissions = ChatPermissions(
-                    can_send_messages=True,
-                    can_send_media_messages=True,
-                    can_send_polls=True,
-                    can_send_other_messages=True,
-                    can_add_web_page_previews=True,
-                    can_change_info=True,
-                    can_invite_users=True,
-                    can_pin_messages=True,
-                )
-                bot.restrict_chat_member(chat_id, user_id, permissions)  
-                print("USER UNBANNED!!!")
+                print(str(datetime.now()) + " FAILED TO UNBAN USER FROM DATABASE: NOT FOUND")
+            user_unban.verified = 1
+            user_unban.warnings = 0
+            s.merge(user_unban)
+            s.commit()
+            permissions = ChatPermissions(
+                can_send_messages=True,
+                can_send_media_messages=True,
+                can_send_polls=True,
+                can_send_other_messages=True,
+                can_add_web_page_previews=True,
+                can_change_info=True,
+                can_invite_users=True,
+                can_pin_messages=True,
+            )
+            bot.restrict_chat_member(chat_id, user_id, permissions)  
+            print(str(datetime.now()) + " USER UNBANNED!!!")
         s.close()
         
     def level_up(self, bot, update, chat_id, command):
         s = session()
         text = update.message.text.replace(command, '')
         user_id = self.get_user_id(text, update, s)
-        print("Going to levelup user_id", user_id)
+        print(str(datetime.now()) + " Going to levelup user_id", user_id)
         if user_id == '':
-            print("FAILED TO LEVELUP USER: NOT FOUND")
+            print(str(datetime.now()) + " FAILED TO LEVELUP USER: NOT FOUND")
         else:
             user = s.query(User).filter(User.id==user_id).first()
             if user is None:
-                print("FAILED TO LEVELUP USER: NOT FOUND")
+                print(str(datetime.now()) + " FAILED TO LEVELUP USER: NOT FOUND")
             else:                    
                 user.popularity = user.popularity+1
                 s.merge(user)
                 s.commit()     
-                print("USER LEVELED UP!!!")
+                print(str(datetime.now()) + " USER LEVELED UP!!!")
         s.close()          
         
     def get_user_id(self, text, update, s):
@@ -1509,15 +1578,15 @@ class TelegramMonitorBot:
         for mensaje in mensajes:
             try:
                 bot.deleteMessage(message_id = mensaje.message_id, chat_id = mensaje.chat_id)
-            except: print("Error deleting mass message, but not a problem") 
+            except: print(str(datetime.now()) + " Error deleting mass message, but not a problem") 
             s.delete(mensaje)
         s.commit()
         s.close()    
         
     def error(self, bot, update, error):
-        print("error")
+        print(str(datetime.now()) + " error")
         """ Log Errors caused by Updates. """
-        print("Update caused error ",
+        print(str(datetime.now()) + " Update caused error ",
             file=sys.stderr)
             
     def queryHandler(self, update: Update, context: CallbackContext):
@@ -1536,8 +1605,8 @@ class TelegramMonitorBot:
             reply_markup=reply_markup_price
             )
         except:
-            print("No changes from last refresh")
-        print("Clicked")
+            print(str(datetime.now()) + " No changes from last refresh")
+        print(str(datetime.now()) + " Clicked")
             
     def price(self, bot, chat_id):      
         msg = tlg_send_message(bot, chat_id, "⏳ <i>Fetching data...</i>", "price", parse_mode=ParseMode.HTML)            
@@ -1580,15 +1649,15 @@ class TelegramMonitorBot:
         
         
     def start(self):
-        print("start")
+        print(str(datetime.now()) + " start")
 
         load_dotenv('.env')  # load main .env file
         environment = os.getenv("ENVIRONMENT")
-        print("Environment: " + environment)
+        print(str(datetime.now()) + " Environment: " + environment)
 
         sub_env = '.env.' + environment
         load_dotenv(sub_env)  # load main .env file
-	
+    
         TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
         CHAT_IDS = os.getenv("CHAT_IDS")
         BOT_ALIAS = os.getenv("BOT_ALIAS")
@@ -1611,16 +1680,19 @@ class TelegramMonitorBot:
 #        listMembers = []
 #        for x in app.get_chat_members("DFX_Finance"):
 #            try:
-#                print("User added")
+#                print(str(datetime.now()) + " User added")
 #                self.add_user(
 #                x.user.id,
 #                x.user.first_name,
 #                x.user.last_name,
 #                x.user.username,
-#                0,0,func.now(),1,0,0)
-#            except: pass
+#                0,0)
+#                print(str(datetime.now()) + " CONFIRMED")
+#            except Exception as e:
+#                print(e)
 #        app.stop()
         # Create the EventHandler and pass it your bot"s token.
+        print(str(datetime.now()) + " Bot token: " + TELEGRAM_BOT_TOKEN)
         updater = Updater(TELEGRAM_BOT_TOKEN)
 
         # Get the dispatcher to register handlers
@@ -1653,7 +1725,7 @@ class TelegramMonitorBot:
         # Handle members joining/leaving chats.
         dp.add_handler(ChatMemberHandler(track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
         dp.add_handler(ChatMemberHandler(self.greet_chat_members, ChatMemberHandler.CHAT_MEMBER))       
-        print("LEN", len(replies_bad_words))
+        print(str(datetime.now()) + " LEN", len(replies_bad_words))
         th_0 = Thread(target=ban_not_verified, args=(bot,))
         th_0.name = "ban_not_verified"
         th_0.start()
@@ -1672,7 +1744,7 @@ class TelegramMonitorBot:
         # Start the Bot
         updater.start_polling(allowed_updates=Update.ALL_TYPES)
 
-        print("Bot started. Montitoring chats: {}".format(self.chat_ids))
+        print(str(datetime.now()) + " Bot started. Montitoring chats: {}".format(self.chat_ids))
 
         # Run the bot until you press Ctrl-C or the process receives SIGINT,
         # SIGTERM or SIGABRT. This should be used most of the time, since
@@ -1680,7 +1752,15 @@ class TelegramMonitorBot:
         updater.idle()
         
 
-if __name__ == "__main__":
+def start_the_bot():
     c = TelegramMonitorBot()
     uvloop.install()
-    c.start()
+    try:
+        c.start()
+    except Exception as e:
+        print(traceback.format_exc())
+        print(str(datetime.now()) + " STARTING AGAIN")
+        start_the_bot()
+
+if __name__ == "__main__":
+    start_the_bot()

@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv('.env')  # load main .env file
 environment = os.getenv("ENVIRONMENT")
+print('Environment: ' + environment)
 sub_env = '.env.' + environment
+print('Sub environment: ' + sub_env)
 load_dotenv(sub_env)  # load main .env file
 # Localhost url: postgresql://localhost/postgres
 TELEGRAM_BOT_POSTGRES_URL = os.getenv("TELEGRAM_BOT_POSTGRES_URL")
@@ -32,6 +34,7 @@ class User(Base):
     join_datetime = Column(DateTime, default=func.now())
     verified = Column(Boolean)
     captcha_message = Column(BigInteger)
+    warnings = Column(BigInteger)
     
 
 class Message(Base):

@@ -4,7 +4,7 @@ Pyrogram==2.0.19
 python-dotenv==0.21.0
 python_telegram_bot==13.11
 requests==2.25.1
-snscrape==0.4.3.20220107.dev56+gd72b519
+snscrape
 SQLAlchemy==1.4.39
 telegram==0.0.1
 textblob==0.15.3
