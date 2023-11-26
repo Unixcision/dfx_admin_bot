@@ -373,21 +373,28 @@ def user_increment(bot):
         s.close()
 
 def clean_messages(bot):
+    count = 0
     while True:
+        if count % 5 == 0:
+            print(str(datetime.now()) + " clean_messages funcionando...")
+        count = count + 1
         sleep(10)
-        s = session()
-        bot_messages = s.query(BotMessages).all()
-        for bot_message in bot_messages:
-            difference = datetime.now() - bot_message.sent_date
-            minutes = difference.total_seconds() / 60
-            types_to_delete = ("banned-from-command", "not-authorized", "welcome", "captcha", "image-guide") 
-            if (minutes > 10 and bot_message.type in types_to_delete) or (difference.total_seconds() > 20 and bot_message.type == "user-level"):
-                try:
-                    bot.deleteMessage(message_id = bot_message.id, chat_id = CHAT_IDS)
-                except Exception as e:
-                    print(str(datetime.now()) + " [003] Error normal, no pasa na")           
-                s.delete(bot_message)
-                s.commit()
+        try:
+            s = session()
+            bot_messages = s.query(BotMessages).all()
+            for bot_message in bot_messages:
+                difference = datetime.now() - bot_message.sent_date
+                minutes = difference.total_seconds() / 60
+                types_to_delete = ("banned-from-command", "not-authorized", "welcome", "captcha", "image-guide") 
+                if (minutes > 10 and bot_message.type in types_to_delete) or (difference.total_seconds() > 20 and bot_message.type == "user-level"):
+                    try:                    
+                        bot.deleteMessage(message_id = bot_message.id, chat_id = CHAT_IDS)
+                    except Exception:
+                        print("Deleting message not found...")
+                    s.delete(bot_message)
+                    s.commit()
+        except Exception:
+            print("Error normal en clean_messages, continuando...")
         s.close()
         
 def twitter_reader(bot):
@@ -541,7 +548,7 @@ class TelegramMonitorBot:
             list(map(int, CHAT_IDS.split(","))))
 
 
-        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "arbrpc", "vote", "levelup", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "x", "medium", "delmsg", "summary", "education", "dfx2", "adminlist", "help"]
+        self.available_commands = ["dragon", "kevin", "adrian", "gm", "coty", "jim", "kim", "kimjim", "jimkim", "good", "hopium", "price", "whalechart", "ban", "hardban", "unban", "bansilent", "hardbansilent", "maticrpc", "arbrpc", "vote", "levelup", "supply", "top10level", "mylevel", "enablecaptcha", "disablecaptcha", "enablewelcome", "disablewelcome", "contract", "website", "twitter", "x", "medium", "delmsg", "purge", "summary", "education", "dfx2", "adminlist", "help"]
         # Regex for message patterns that cause user ban
         self.message_ban_patterns = MESSAGE_BAN_PATTERNS
         self.message_ban_re = (re.compile(
@@ -744,14 +751,27 @@ class TelegramMonitorBot:
             s = session()
             usuario = s.query(User).filter_by(id=update.message.from_user.id).first()
             log_message = "Log Message"
+            invalid_aliases = False
+            scam_group = False
+            forwarded = False
+            if update.message.text:
+                aliases = re.findall(r'@(\w+)', str(update.message.text))
+                scam_group = "群组" in update.message.text or "团队" in update.message.text
+                print("Se han encontrado los siguientes alias en el mensaje", aliases)
+                invalid_aliases = False
+            if update.message.forward_from or update.message.forward_from_chat:
+                forwarded = True
+            for alias in aliases:
+                user_with_alias = s.query(User).filter_by(username=alias).first()
+                if user_with_alias is None:
+                    invalid_aliases = True
             if (update.message.audio or
                 update.message.document or
                 update.message.game or
-                update.message.voice) and usuario.popularity == 0:
+                update.message.voice or invalid_aliases or scam_group or forwarded) and usuario.popularity == 0:
                 # Logging
                 mention_html = update.message.from_user.mention_html()
                 userAddWarn = s.query(User).filter(User.id==update.message.from_user.id).first()  
-                tlg_send_message(bot, CHAT_IDS, log_message, type="not-authorized", parse_mode=ParseMode.HTML)
                 if userAddWarn is None:
                         print(str(datetime.now()) + " ERROR BRUTAL 67")
                 else:         
@@ -768,7 +788,10 @@ class TelegramMonitorBot:
                         tlg_send_message(bot, CHAT_IDS, log_message_send, type="not-authorized", parse_mode=ParseMode.HTML)
                 print(log_message)
                 # Delete the message
-                update.message.delete()
+                try:
+                    update.message.delete()
+                except Exception as e:
+                    print("Error normal borrando mensaje")
                 # Log in database
                 messageHide = MessageHide(
                     user_id=update.message.from_user.id,
@@ -1381,6 +1404,9 @@ class TelegramMonitorBot:
                 captcha.data = "true"
                 s.merge(captcha)
                 s.commit()
+        if command == "/purge":
+            if is_admin and self.admin_exempt:
+                asyncio.run(self.remove_deleted_accounts(bot, update))
         if command == "/disablecaptcha":
             if is_admin and self.admin_exempt:
                 captcha = s.query(MiscData).filter_by(key = "captcha").first()
@@ -1457,9 +1483,9 @@ class TelegramMonitorBot:
     def hard_ban_command(self, bot, update, chat_id, silent, command, user_id=None):
         # Es admin, continúo
         print(str(datetime.now()) + " hard_ban_command")
-        text = update.message.text.replace(command, '')
         s = session()
         if user_id is None:
+            text = update.message.text.replace(command, '')
             user_id = self.get_user_id(text, update, s)
         print(str(datetime.now()) + " Going to ban user_id", user_id)
         if user_id == '' or user_id is None:
@@ -1608,6 +1634,32 @@ class TelegramMonitorBot:
             print(str(datetime.now()) + " No changes from last refresh")
         print(str(datetime.now()) + " Clicked")
             
+    async def remove_deleted_accounts(self, bot, update):
+        print(str(datetime.now()) + " remove_deleted_accounts")
+        try:
+            # Crear y configurar el cliente de Pyrogram dentro de un bloque with
+            async with Client(
+                "bot",
+                bot_token=TELEGRAM_BOT_TOKEN,
+                api_id="14842537",
+                api_hash="e5502ebd10539f1588a9604989c5a613",
+            ) as app:
+                listMembers = []
+                async for member in app.get_chat_members("DFX_Finance"):
+                    try:
+                        print(member.user.username + ' ' + str(member.user.status))
+                        if member.user.is_deleted or str(member.user.status) == "UserStatus.LONG_AGO":
+                            user_id = member.user.id
+                            print(str(datetime.now()) + f" Removing deleted account: {user_id}")
+                            bot.kick_chat_member(CHAT_IDS, user_id)
+                    except Exception as e:
+                        print(e)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(str(datetime.now()) + f" Error removing deleted accounts: {e}")
+
+
     def price(self, bot, chat_id):      
         msg = tlg_send_message(bot, chat_id, "⏳ <i>Fetching data...</i>", "price", parse_mode=ParseMode.HTML)            
         reply_markup_price = InlineKeyboardMarkup([
