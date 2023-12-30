@@ -11,6 +11,7 @@ This bot logs all messages sent in a Telegram Group to a database.
 
 #from __future__ import print_function
 import os
+import http.client
 import sys
 import re
 import string
@@ -754,9 +755,10 @@ class TelegramMonitorBot:
             invalid_aliases = False
             scam_group = False
             forwarded = False
+            aliases = ''
             if update.message.text:
                 aliases = re.findall(r'@(\w+)', str(update.message.text))
-                scam_group = "群组" in update.message.text or "团队" in update.message.text
+                scam_group = "群组" in update.message.text or "团队" in update.message.text or "全新" in update.message.text
                 print("Se han encontrado los siguientes alias en el mensaje", aliases)
                 invalid_aliases = False
             if update.message.forward_from or update.message.forward_from_chat:
@@ -1415,7 +1417,7 @@ class TelegramMonitorBot:
                 s.commit()       
         if command == "/contract":
             delete_message_by_type(bot, "contract", chat_id)
-            tlg_reply_message(message, "<b><u>DFX Contract Addresses:</u></b>\n<b>Polygon:</b>\n<code>0xE7804D91dfCDE7F776c90043E03eAa6Df87E6395</code>\n<b>Ethereum:</b>\n<code>0x888888435FDe8e7d4c54cAb67f206e4199454c60</code>\n<b>Arbitrum:</b>\n<code>0xA4914B824eF261D4ED0Ccecec29500862d57c0a1</code>", "contract")
+            tlg_reply_message(message, "<b><u>DFX Contract Addresses:</u></b>\n<b>Polygon:</b>\n<code>0x27f485b62C4A7E635F561A87560Adf5090239E93</code>\n<b>Ethereum:</b>\n<code>0x888888435FDe8e7d4c54cAb67f206e4199454c60</code>\n<b>Arbitrum:</b>\n<code>0x27f485b62c4a7e635f561a87560adf5090239e93</code>", "contract")
         if command == "/website":
             delete_message_by_type(bot, "website", chat_id)
             tlg_reply_message(message, "Official Website: http://dfx.finance/", "website")
@@ -1659,7 +1661,6 @@ class TelegramMonitorBot:
             traceback.print_exc()
             print(str(datetime.now()) + f" Error removing deleted accounts: {e}")
 
-
     def price(self, bot, chat_id):      
         msg = tlg_send_message(bot, chat_id, "⏳ <i>Fetching data...</i>", "price", parse_mode=ParseMode.HTML)            
         reply_markup_price = InlineKeyboardMarkup([
@@ -1670,35 +1671,93 @@ class TelegramMonitorBot:
             message_id=msg['msg'].message_id,
             text=self.priceText(),
             parse_mode='HTML',
-            reply_markup=reply_markup_price)             
-        
-    def priceText(self):
-        # check self.cleanLast(bot, chat_id, message_id, "price")
-        request = requests.post('https://api.jeroenmoonen.nl/dfx.json')
-        headers = {
-            'accept': 'application/json',
-        }
-        holders_request = requests.get('https://api.covalenthq.com/v1/1/tokens/0x888888435fde8e7d4c54cab67f206e4199454c60/token_holders/?quote-currency=USD&format=JSON&page-number=0&page-size=50000&key=ckey_c5a2a730f02844b49c29d2c4457')
-        response = requests.get('https://api.coingecko.com/api/v3/coins/dfx-finance', headers=headers)
-        text = ''
-        if request.status_code == 200 and response.status_code == 200 and holders_request.status_code == 200:
-            data = request.json()
-            datacg = response.json()
-            price=datacg['market_data']['current_price']['usd']
-            satoshi=data['satoshi']
-            marketcap_btc=datacg['market_data']['market_cap']['usd']
-            circulating_supply=data['circulating_supply']
-            volume=datacg['market_data']['total_volume']['usd']
-            todayHoldersEth = len(json.loads(holders_request.text)['data']['items'])
-            todayHoldersPoly = int(data['hodlers']['polygon']['today'].replace(',', ''))
-            todayHolders = todayHoldersEth + todayHoldersPoly
-            h_change="{0:+g}".format(round(datacg['market_data']['price_change_percentage_24h'],2)) + '%' 
-            text = '📊 <b>DFX stats at ' + str(datetime.now(timezone.utc).strftime("%Y/%m/%d %H:%M")) + '</b>\n<b>Price:</b>  ' + str(price) + '$\n<b>Sats:</b> ' + satoshi + '\n<b>MarketCap:</b> ' + format(int(marketcap_btc),",") + '$\n<b>Circulating Supply:</b> ' + str(circulating_supply) + '\n<b>Volume:</b> ' + format(int(volume),",") + '$\n<b>Wallets:</b> ' + format(int(todayHolders),",") + '\n<b>24h change:</b> ' + h_change
+            reply_markup=reply_markup_price)  
+
+    def priceText(self): 
+        try:
+            headers = {'accept': 'application/json'}
+
+            holders_request = requests.get('https://api.covalenthq.com/v1/1/tokens/0x888888435fde8e7d4c54cab67f206e4199454c60/token_holders/?quote-currency=USD&format=JSON&page-number=0&page-size=50000&key=ckey_c5a2a730f02844b49c29d2c4457')
+            response = requests.get('https://api.coingecko.com/api/v3/coins/dfx-finance', headers=headers)
+            circ_supply_request = requests.get('https://circ-supply.dfx.finance/api')
+
+            if response.status_code == 200 and circ_supply_request.status_code == 200:
+                data = response.json()
+                datasup = circ_supply_request.json()
+
+                price = data['market_data']['current_price']['usd']
+                satoshi = format(data['market_data']['current_price']['btc'], '.8f')  # Mostrar Sats con 8 decimales
+                marketcap_btc = data['market_data']['market_cap']['usd']
+                
+                # Formatear Circulating Supply
+                circulating_supply = datasup
+                circulating_supply = f"{circulating_supply:,.2f}"
+
+                volume = data['market_data']['total_volume']['usd']
+
+                todayHolders = self.get_token_holders('ethereum', '0x888888435FDe8e7d4c54cAb67f206e4199454c60') + self.get_token_holders('polygon', '0x27f485b62C4A7E635F561A87560Adf5090239E93')
+
+                h_change = "{0:+g}".format(round(data['market_data']['price_change_percentage_24h'], 2)) + '%'
+
+                text = (
+                    f'📊 <b>DFX stats at {datetime.now(timezone.utc).strftime("%Y/%m/%d %H:%M")}</b>\n'
+                    f'<b>Price:</b> {price}$\n'
+                    f'<b>Sats:</b> {satoshi} BTC\n'
+                    f'<b>MarketCap:</b> {format(int(marketcap_btc), ",")}$\n'
+                    f'<b>Circulating Supply:</b> {circulating_supply} DFX\n'
+                    f'<b>Volume:</b> {format(int(volume), ",")}$\n'
+                    f'<b>Wallets:</b> {format(int(todayHolders), ",")}\n'
+                    f'<b>24h change:</b> {h_change}'
+                )
+                print(f'Success: {text}')
+
+                return text
+            else:
+                raise Exception(f'Query failed. Return codes: {response.status_code}, {holders_request.status_code}, {circ_supply_request.status_code}')
+        except Exception as e:
+            print(f'Error: {e}')
+            raise   
+
+    def get_token_holders(self, network, contract_address):
+        def get_polygon_token_holders(contract_address):
+            conn = http.client.HTTPSConnection("www.oklink.com")
+            headers = {
+                'OK-ACCESS-KEY': '758ce7c3-9fc4-40e0-9b38-c92001d238e7',
+                'Cookie': '__cf_bm=yCKRSuD00cBlDSZ.lUld.RmqMu4pLrMZbZxK38s4QMk-1703945676-1-AWNNcwxH0iLAlwapnfRKOftHjRIMYF3KK4r+6QZjaqfNJXbDbuw3gZLWOsdU7JYerNiLl8IutYxCSuX0ZlqINYI='
+            }
+            conn.request("GET", f"/api/v5/explorer/token/token-list?chainShortName=POLYGON&limit=1&tokenContractAddress={contract_address}", '', headers)
+            res = conn.getresponse()
+            data = res.read()
+            token_info = data.decode("utf-8")
+
+            # Parse the token_info to extract addressCount
+            token_info_dict = json.loads(token_info)
+            address_count = token_info_dict["data"][0]["tokenList"][0]["addressCount"]
+            return int(address_count)
+
+        def get_eth_token_holders(contract_address):
+            url = f"https://api.ethplorer.io/getTokenInfo/{contract_address}?apiKey=EK-8jBAH-qTs7CNC-uQS3b"
+            response = requests.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                # Accessing the "holdersCount" property using dictionary indexing
+                return data["holdersCount"]
+            else:
+                return None
+
+        # Get holders count for the specified network
+        if network == "ethereum":
+            holders_count = get_eth_token_holders(contract_address)
+        elif network == "polygon":
+            holders_count = get_polygon_token_holders(contract_address)
         else:
-            raise Exception('Query failed and return code is ' +  + '.      ' +  + ''.format(request.status_code,
-                            query))               
-        return text
-        
+            raise ValueError("Invalid network specified. Supported networks: ethereum, polygon")
+
+        # Print the results
+        print(f"Network: {network}")
+        print(f"Holders count: {holders_count}")
+
+        return holders_count 
         
     def start(self):
         print(str(datetime.now()) + " start")
