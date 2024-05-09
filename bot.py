@@ -11,6 +11,8 @@ This bot logs all messages sent in a Telegram Group to a database.
 
 #from __future__ import print_function
 import os
+import ntplib
+from time import ctime
 import http.client
 import sys
 import re
@@ -1417,17 +1419,19 @@ class TelegramMonitorBot:
                 s.commit()       
         if command == "/contract":
             delete_message_by_type(bot, "contract", chat_id)
-            tlg_reply_message(message, "<b><u>DFX Contract Addresses:</u></b>\n<b>Polygon:</b>\n<code>0x27f485b62C4A7E635F561A87560Adf5090239E93</code>\n<b>Ethereum:</b>\n<code>0x888888435FDe8e7d4c54cAb67f206e4199454c60</code>\n<b>Arbitrum:</b>\n<code>0x27f485b62c4a7e635f561a87560adf5090239e93</code>", "contract")
+            tlg_reply_message(message, "<u>DFX Token Addresses:</u>\nEthereum: <code>0x888888435fde8e7d4c54cab67f206e4199454c60</code>\n\n<u>CCIP Enabled DFX</u> <i>(Native Layer2 DFX):</i>\nPolygon: <code>0x27f485b62C4A7E635F561A87560Adf5090239E93</code>\nArbitrum: <code>0x27f485b62C4A7E635F561A87560Adf5090239E93</code>\n\n<u>Bridged DFX</u> <i>(PoS):</i>\n<i>(No longer supported, migrate to the new CCIP Enabled DFX (L2))</i>\n\nPolygon: <code>0xE7804D91dfCDE7F776c90043E03eAa6Df87E6395</code>\nArbitrum: <code>0xA4914B824eF261D4ED0Ccecec29500862d57c0a1</code>\n\nClick the link below to learn how to bridge your DFX (L2) and or migrate your DFX PoS for DFX (L2).\nhttps://docs.dfx.finance/faqs/dfx-migration-bridge", "contract")
+
         if command == "/website":
             delete_message_by_type(bot, "website", chat_id)
-            tlg_reply_message(message, "Official Website: http://dfx.finance/", "website")
+            tlg_reply_message(message, "Official Website: http://dfx.finance/\nOfficial Dapp: https://exchange.dfx.finance/\nLinkTree: https://linktr.ee/dfxfinance", "website")
         if command == "/help":
             delete_message_by_type(bot, "help", chat_id)
             help_text = "<b><u>These are the commands available on this group:\n\nInfo on DFX Finance:\n</u></b>- /website → Displays the DFX Website link\n- /twitter or /x → Displays the Twitter link\n- /medium → Displays the Medium link\n- /summary → Displays a summary of DFX\n- /education → Displays links to learn more about DFX Finance\n- /price → Display the current price\n- /supply → Displays the current supply\n- /vote → Post the voting tutorial\n- /contract → Displays the contract addresses\n- /dfx2 → Displays info about DFX 2.0\n\n<b><u>Images</u></b>:\n- /gm → Post a good morning image\n- /dragon → Post a random dragon image\n- /kevin → Post Kevin&#x27;s image\n- /adrian → Post Adrian&#x27;s image\n- /coty → Post Coty&#x27;s image\n- /jim → Post Jim&#x27;s image\n- /hopium → Post a random hopium image\n- /whalechart → Post the whale chart\n\n<b><u>Group Info &amp; Others:\n</u></b>- /maticrpc → Post the Matic RPC configuration\n- /arbrpc → Post the Arbitrum RPC configuration\n- /top10level → Displays the top 10 contributors of the group\n- /mylevel → Shows your level to the group\n- /adminlist → Displays the admin list of the group\n- /help → Displays this message\n\n✍️ Reply with +1 to the messages that <b>you consider valuable</b> to contribute to this system.\n\n🔔 <b>Start a conversation with me (bot) privately</b> if you want to get updated when someone adds reputation (+1) to you."
             tlg_reply_message(message, help_text, "help")
         if command == "/adminlist":
             delete_message_by_type(bot, "admin-list", chat_id)
-            tlg_reply_message(message, "<b><u>DFX Finance Admins list:\n</u></b>- @CotyKuhn \n- @naisechef \n- @robeyryan \n- @danicryptonews \n- @snappycappy\n- @Negitaro\n- @bigbossmanf\n- @AJ_DeFi \n- @Andrew_Pinch \n- @scottdoughty\n- @TheBigSur", "admin-list")
+            tlg_reply_message(message, "<u>Core Contributors:</u>\n- @CotyKuhn\n- @chinmaygopal\n- @henrytoronto\n- @kevinzhangTO\n- @Negitaro\n- @spelunkr\n\n<u>Ambassadors:</u>\n- @AJ_DeFi\n- @Andrew_Pinch\n- @ArieJones1227\n- @dbtelcoin\n- @DeFiConnoisseur\n- @dlongshot\n- @robeyryan\n- @snappycappy\n- @steveocrypto", "admin-list")
+
         if command == "/twitter" or command == "/x":
             delete_message_by_type(bot, "twitter", chat_id)
             tlg_reply_message(message, "Official Account: https://twitter.com/DFXFinance", "twitter")
@@ -1443,7 +1447,8 @@ class TelegramMonitorBot:
             delete_message_by_type(bot, "dfx2", chat_id)
             tlg_reply_message(message, dfx2_text, "dfx2")
         if command == "/summary":
-            summary_text = "<b>*** DFX Summary ***</b>\n\nForex (<i>FX</i>) Decentralized Exchange specializing in non-USD Stablecoins that are backed 1:1 with their fiat equivalent.\n\n<u>Current Non-USD Stablecoin offerings include</u>:\nCADC 🇨🇦, EUROC & EURS 🇪🇺, XSGD 🇸🇬, GYEN 🇯🇵, NGNC 🇳🇷🇦, NZDS 🇳🇿, XIDR 🇮🇩, TRYB 🇹🇷 all paired with USDC 🇺🇸\n\nallowing users of the platform to swap one stablecoin for another at the cost of a low fee (a regular bank charges 2% upwards to swap currencies, so DFX is up to 40x cheaper than a bank)\n\n<u>How does this work?</u>\n- Liquidity providers (<i>LP</i>) provide liquidity to the stablecoin pools by staking their pair of choice on <a href='https://exchange.dfx.finance/pools'>https://exchange.dfx.finance/pools</a> .\n- Users of the platform exchange one stablecoin for another and as part of the transaction, a 0.05% swap fee is taken.\n- Liquidity providers receive swap fees (<i>added back to the pool on every swap</i>), and incentives from DFX in the form of DFX tokens (<i>claimable at your convenience</i>) resulting in an avg APR between 4% - 85% (<i>depending on the pool you provide liquidity too</i>).\n- DFX tokens can then be locked into veDFX to give a boost to the APR received from their liquidity pool investment of up to 2.5x.\n- Locked DFX tokens (<i>veDFX</i>) can also be used to vote on proposals within the DAO giving the community the ability to steer the direction of the protocol.\n\n<u>Upcoming Features</u>:\n- DFX2.5: This feature will all the DFX AMM to be used with non-USDC pairings. Meaning, you can create any liquidity pool you would like and vote to have it put on the gauge to receive DFX rewards. (<i>This is currently under final audit review</i>)\n- Bribes: Those holding veDFX can be bribed to vote on snapshot proposals via Hiddenhand. (<i>Pending start date from Redacted</i>)\n- Gauges: Currently working with Chainlinks CCIP (<i>Cross-Chain Interoperability Protocol</i>) to start having the gauges deployed to Polygon and Arbitrum. Meaning, the APRs for those two blockchains will no longer be static. (<i>No timeline. However, it’s at the top of the list</i>)\n\n<u>Partnerships</u>:\n- Circle: Close partner and Issuer of the USDC and EUROC stablecoins.\n- Paytrie: Close partner and Issuer of the Canadian Dollar stablecoin (<i>CADC</i>).\n- Insure DAO: Insurance for liquidity pools.\n- Bluejay Finance: Specializes in non-USD stablecoin on/off ramps to fiat.\n- Chainlink: On-chain Oracle network to ensure super-efficient prices match real world exchange rates.\n- DIA: On-chain Oracle network for L1 & L2’s.\n- Stasis: Issuer of the European stablecoin (<i>EURS</i>).\n- Link: Issuer of the Nigerian stablecoin (<i>NGNC</i>).\n- PoundToken: Issuer of the British pound stablecoin (<i>GBPT</i>).\n- GMO-Z: Issuer of the Japanese Yen stablecoin (<i>GYEN</i>).\n- Techemynt: Issuer of the New Zealand stablecoin (<i>NZDS</i>).\n- Bilira: Issuer of the Turkish Lira stablecoin (<i>TRYB</i>).\n- StraitsX: Issuer of XSGD & XIDR (<i>Singaporean Dollar & Indonesian Rupiah</i>).\n\n<u>Where to get DFX?</u>\nCentralized Exchanges: Huobi, CoinDCX\nDecentralized Exchanges: 1inch, Balancer, SushiSwap, Telcoin App\n\n<u>Additional Information</u>:\n<a href='https://docs.dfx.finance/'>https://docs.dfx.finance/</a>\n"
+            summary_text = "<u>DFX Summary</u>\nDFX Finance is a decentralized foreign exchange (<i>FX</i>) protocol designed for trading fiat-backed stablecoins like CADC, EURC, XSGD, etc. It offers a secure way to earn yield and provides financial localization for global businesses' customers. In the evolving landscape of global finance, relying solely on USD-pegged stablecoins is insufficient. A decentralized protocol allowing the swapping of non-USD stablecoins pegged to various foreign currencies is not just important, but essential.\nDFX Finance is keen to create an ecosystem for non-USD stablecoins to thrive and provide value to users all around the world. We will be pushing out products centered around products and integrations for stablecoins of every currency. 💱\nAn automated market maker (AMM) on Ethereum allows the decentralized exchange of tokens according to a bonding curve. For DFX, this curve will be dynamically adjusted by using real world FX price feeds from Chainlink to ensure that you get the best rates.\nWorking with stablecoin issuers in foreign countries and their local crypto on-ramps will be necessary to onboard the masses into DeFi. DFX aims to create partnerships with stablecoin issuers around the world and help them bootstrap the usage of their tokens to the world.\nDFX is building stablecoins for the world. 🌐\n\n<u>Learn more about how DFX is changing the world here:</u> https://docs.dfx.finance/"
+
             delete_message_by_type(bot, "summary", chat_id)
             tlg_reply_message(message, summary_text, "summary")
         if command == "/delmsg":
@@ -1639,23 +1644,24 @@ class TelegramMonitorBot:
     async def remove_deleted_accounts(self, bot, update):
         print(str(datetime.now()) + " remove_deleted_accounts")
         try:
-            # Crear y configurar el cliente de Pyrogram dentro de un bloque with
-            async with Client(
-                "bot",
-                bot_token=TELEGRAM_BOT_TOKEN,
-                api_id="14842537",
-                api_hash="e5502ebd10539f1588a9604989c5a613",
-            ) as app:
-                listMembers = []
-                async for member in app.get_chat_members("DFX_Finance"):
-                    try:
-                        print(member.user.username + ' ' + str(member.user.status))
-                        if member.user.is_deleted or str(member.user.status) == "UserStatus.LONG_AGO":
-                            user_id = member.user.id
-                            print(str(datetime.now()) + f" Removing deleted account: {user_id}")
-                            bot.kick_chat_member(CHAT_IDS, user_id)
-                    except Exception as e:
-                        print(e)
+            with session() as s:
+                # Crear y configurar el cliente de Pyrogram dentro de un bloque with
+                async with Client(
+                    "bot",
+                    bot_token=TELEGRAM_BOT_TOKEN,
+                    api_id="14842537",
+                    api_hash="e5502ebd10539f1588a9604989c5a613",
+                ) as app:
+                    listMembers = []
+                    async for member in app.get_chat_members("DFX_Finance"):
+                        try:
+                            print(str(member.user.username) + ' ' + str(member.user.status))
+                            if member.user.is_deleted or str(member.user.status) == "UserStatus.LONG_AGO":
+                                user_id = member.user.id
+                                print(str(datetime.now()) + f" Removing deleted account: {user_id}")
+                                bot.kick_chat_member(CHAT_IDS, user_id)
+                        except Exception as e:
+                            print(e)
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -1862,6 +1868,12 @@ class TelegramMonitorBot:
         # start_polling() is non-blocking and will stop the bot gracefully.
         updater.idle()
         
+def sync_time():
+    c = ntplib.NTPClient()
+    response = c.request('pool.ntp.org')
+    print('Tiempo antes de sincronizar:', ctime(response.tx_time))
+    print('Offset de tiempo:', response.offset)
+    print('Tiempo después de sincronizar:', ctime(response.tx_time))
 
 def start_the_bot():
     c = TelegramMonitorBot()
@@ -1874,4 +1886,5 @@ def start_the_bot():
         start_the_bot()
 
 if __name__ == "__main__":
+    sync_time()
     start_the_bot()
